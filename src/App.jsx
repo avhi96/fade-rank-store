@@ -35,7 +35,7 @@ export default function App() {
   return (
     <DarkModeProvider>
       <AuthProvider>
-        <div className="flex md:pr-64 min-h-screen bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-white transition-colors">
+        <div className="flex md:pr-72 min-h-screen bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-white transition-colors">
           <Sidebar />
           <div className="flex-1 p-4 md:pl-72 bg-white dark:bg-gray-900 rounded-xl transition-colors">
             <Routes>
