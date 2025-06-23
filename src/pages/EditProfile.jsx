@@ -7,7 +7,7 @@ import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
 const EditProfile = () => {
-  const { user, refreshUser } = useAuth(); // ✅ Include refreshUser
+  const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ username: '', photoURL: '' });
   const [loading, setLoading] = useState(true);
@@ -21,6 +21,13 @@ const EditProfile = () => {
       try {
         const ref = doc(db, 'users', user.uid);
         const snap = await getDoc(ref);
+        const data = snap.data();
+        setForm({
+          username: data.username || user.displayName || '',
+          photoURL: data.photoURL || user.photoURL || ''
+        });
+        setImagePreview(data.photoURL || user.photoURL || '');
+
         if (snap.exists()) {
           const data = snap.data();
           setForm({ username: data.username || '', photoURL: data.photoURL || '' });
@@ -41,8 +48,8 @@ const EditProfile = () => {
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     setUploading(true);
+
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', 'fademart_unsigned');
@@ -73,21 +80,32 @@ const EditProfile = () => {
     try {
       await updateProfile(user, {
         displayName: form.username,
-        photoURL: form.photoURL,
+        photoURL: form.photoURL || user.photoURL,
       });
 
       await updateDoc(doc(db, 'users', user.uid), {
         username: form.username,
-        photoURL: form.photoURL,
+        photoURL: form.photoURL || user.photoURL,
       });
 
-      await refreshUser(); // ✅ Refresh the user
+      await refreshUser();
       toast.success('Profile updated!');
       navigate('/profile');
     } catch (err) {
       toast.error('Failed to update profile');
     }
+
+    if (
+      form.username === user.displayName &&
+      (form.photoURL === '' || form.photoURL === user.photoURL)
+    ) {
+      toast('No changes to save.');
+      return;
+    }
+
   };
+
+
 
   const handleDeleteAccount = async () => {
     try {
@@ -100,24 +118,34 @@ const EditProfile = () => {
     }
   };
 
-  if (!user) return <p className="text-center mt-10 text-gray-500">Please login first.</p>;
-  if (loading) return <p className="text-center mt-10 text-gray-400">Loading...</p>;
+  if (!user)
+    return <p className="text-center mt-10 text-gray-500">Please login first.</p>;
+  if (loading)
+    return <p className="text-center mt-10 text-gray-400">Loading...</p>;
 
   return (
-    <div className="max-w-xl mx-auto px-6 py-10 bg-white dark:bg-gray-900 text-gray-800 dark:text-white rounded-lg shadow relative">
+    <div className="max-w-xl mx-auto px-4 sm:px-6 py-10 bg-white dark:bg-gray-900 text-gray-800 dark:text-white rounded-lg shadow">
       <h2 className="text-2xl font-bold mb-6 text-center">Edit Profile</h2>
 
-      <form onSubmit={handleSave} className="space-y-5">
-        <div className="flex flex-col items-center">
+      <form onSubmit={handleSave} className="space-y-6">
+        {/* Profile Image Section */}
+        <div className="flex flex-col items-center justify-center text-center">
           {imagePreview && (
             <img
               src={imagePreview}
               alt="Profile"
-              className="w-24 h-24 rounded-full object-cover border-2 border-blue-500"
+              className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-2 border-blue-500"
             />
           )}
-          <input type="file" accept="image/*" onChange={handleImageUpload} className="mt-2" />
-          {uploading && <p className="text-sm text-gray-400 mt-1">Uploading...</p>}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            className="mt-2 text-sm"
+          />
+          {uploading && (
+            <p className="text-sm text-gray-400 mt-1">Uploading...</p>
+          )}
         </div>
 
         <input
@@ -132,32 +160,33 @@ const EditProfile = () => {
 
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
         >
           Save Changes
         </button>
       </form>
 
-      <div className="mt-6 text-center">
+      {/* Delete Button */}
+      <div className="mt-6">
         <button
           onClick={() => setShowDeleteModal(true)}
-          className="w-full bg-red-600 text-white py-2 rounded"
+          className="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded transition"
         >
           Delete My Account Permanently
         </button>
       </div>
 
+      {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded shadow-lg w-full max-w-sm text-center">
-            <h3 className="text-lg font-bold mb-4 text-gray-800 dark:text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-sm text-center">
+            <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-white">
               Confirm Account Deletion
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
-              This action is permanent and cannot be undone. Are you sure you want to delete your
-              account?
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-5">
+              This action is permanent and cannot be undone.
             </p>
-            <div className="flex justify-center gap-4">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button
                 onClick={handleDeleteAccount}
                 className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
@@ -166,7 +195,7 @@ const EditProfile = () => {
               </button>
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded hover:bg-gray-400"
+                className="bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded"
               >
                 Cancel
               </button>
