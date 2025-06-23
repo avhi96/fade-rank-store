@@ -57,7 +57,7 @@ const Contact = () => {
             icon={<FaDiscord size={28} className="text-indigo-600 dark:text-indigo-400" />}
             title="Join Discord"
             text="discord.gg/fade"
-            href="https://discord.gg/fade"
+            href="https://discord.gg/Ktgv5esafd"
           />
           <InfoCard
             icon={<FaWhatsapp size={28} className="text-green-600 dark:text-green-400" />}
@@ -134,9 +134,9 @@ const Contact = () => {
         <div className="text-center mt-10 fade-in">
           <h2 className="text-lg font-semibold mb-2">Follow Us</h2>
           <div className="flex justify-center gap-6 mt-4">
-            <SocialIcon href="#" Icon={FaInstagram} color="pink" name="Instagram" />
-            <SocialIcon href="#" Icon={FaFacebookF} color="blue" name="Facebook" />
-            <SocialIcon href="#" Icon={FaYoutube} color="red" name="YouTube" />
+            <SocialIcon href="https://www.instagram.com/fade_mart013/" Icon={FaInstagram} color="pink" name="Instagram" />
+            <SocialIcon href="https://www.facebook.com/profile.php?id=61577757806514" Icon={FaFacebookF} color="blue" name="Facebook" />
+            <SocialIcon href="https://www.youtube.com/@FadeNetwork013" Icon={FaYoutube} color="red" name="YouTube" />
           </div>
           <p className="text-gray-500 dark:text-gray-400 mt-6 text-sm">© 2025 FadeMart. All rights reserved.</p>
         </div>
