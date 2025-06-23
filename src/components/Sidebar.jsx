@@ -43,81 +43,82 @@ const Sidebar = () => {
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 left-0 h-full w-60 bg-gray-900 text-white z-50 transition-transform duration-300 ease-in-out 
-        ${open ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:static`}
+        className={`fixed md:static top-0 left-0 h-full md:h-screen w-60 bg-gray-900 text-white z-50 flex flex-col justify-between transition-transform duration-300 ease-in-out
+        ${open ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
       >
-        <div className="flex flex-col justify-between h-full p-5">
-          {/* Top Section */}
-          <div>
-            <img
-              className='mb-5 w-20 mx-auto'
-              src="/fade-icon.png"
-              alt="Fade"
-            />
-            <div className="flex flex-col gap-3">
-              {links.map(link => (
-                <NavLink
-                  key={link.name}
-                  to={link.to}
-                  onClick={() => setOpen(false)}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 p-3 rounded-md transition-all ${
-                      isActive ? 'bg-blue-600 font-semibold' : 'hover:bg-gray-700'
-                    }`
-                  }
-                >
-                  <span className="text-lg">{link.icon}</span>
-                  <span>{link.name}</span>
-                </NavLink>
-              ))}
+        {/* Sidebar Content */}
+        <div className="flex-1 p-5 overflow-y-auto">
+          {/* Logo */}
+          <img
+            className="mb-5 w-20 mx-auto"
+            src="/fade-icon.png"
+            alt="Fade"
+          />
 
-              {isAdmin(user) && (
-                <NavLink
-                  to="/admin"
-                  onClick={() => setOpen(false)}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 p-3 rounded-md transition-all ${
-                      isActive ? 'bg-blue-700 font-semibold' : 'hover:bg-gray-700 text-blue-400'
-                    }`
-                  }
-                >
-                  <FaTools className="text-lg" />
-                  <span>Admin Panel</span>
-                </NavLink>
-              )}
-            </div>
-          </div>
-
-          {/* Bottom Auth Section */}
-          <div className="border-t border-gray-700 pt-4 mt-4">
-            {user ? (
+          {/* Navigation Links */}
+          <div className="flex flex-col gap-3">
+            {links.map(link => (
               <NavLink
-                to="/profile"
+                key={link.name}
+                to={link.to}
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-2 p-3 mt-2 bg-blue-600 rounded justify-center hover:bg-blue-700"
+                className={({ isActive }) =>
+                  `flex items-center gap-3 p-3 rounded-md transition-all ${
+                    isActive ? 'bg-blue-600 font-semibold' : 'hover:bg-gray-700'
+                  }`
+                }
               >
-                <FaUserCircle size={20} />
-                <span>My Profile</span>
+                <span className="text-lg">{link.icon}</span>
+                <span>{link.name}</span>
               </NavLink>
-            ) : (
-              <div className="flex flex-col gap-2">
-                <NavLink
-                  to="/login"
-                  onClick={() => setOpen(false)}
-                  className="bg-blue-600 text-white text-center px-3 py-2 rounded hover:bg-blue-700"
-                >
-                  Login
-                </NavLink>
-                <NavLink
-                  to="/signup"
-                  onClick={() => setOpen(false)}
-                  className="bg-green-600 text-white text-center px-3 py-2 rounded hover:bg-green-700"
-                >
-                  Signup
-                </NavLink>
-              </div>
+            ))}
+
+            {isAdmin(user) && (
+              <NavLink
+                to="/admin"
+                onClick={() => setOpen(false)}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 p-3 rounded-md transition-all ${
+                    isActive ? 'bg-blue-700 font-semibold' : 'hover:bg-gray-700 text-blue-400'
+                  }`
+                }
+              >
+                <FaTools className="text-lg" />
+                <span>Admin Panel</span>
+              </NavLink>
             )}
           </div>
+        </div>
+
+        {/* Bottom Auth Section */}
+        <div className="p-5 border-t border-gray-700">
+          {user ? (
+            <NavLink
+              to="/profile"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 p-3 bg-blue-600 rounded justify-center hover:bg-blue-700"
+            >
+              <FaUserCircle size={20} />
+              <span>My Profile</span>
+            </NavLink>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <NavLink
+                to="/login"
+                onClick={() => setOpen(false)}
+                className="bg-blue-600 text-white text-center px-3 py-2 rounded hover:bg-blue-700"
+              >
+                Login
+              </NavLink>
+              <NavLink
+                to="/signup"
+                onClick={() => setOpen(false)}
+                className="bg-green-600 text-white text-center px-3 py-2 rounded hover:bg-green-700"
+              >
+                Signup
+              </NavLink>
+            </div>
+          )}
         </div>
       </div>
     </>
