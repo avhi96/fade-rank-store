@@ -27,7 +27,7 @@ export default function App() {
       <AuthProvider>
         <div className="flex min-h-screen bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-white transition-colors">
           <Sidebar />
-          <div className="flex-1 p-5 pl-72 bg-white dark:bg-gray-900 rounded-xl transition-colors">
+          <div className="flex-1 p-5 md:pl-72 bg-white dark:bg-gray-900 rounded-xl transition-colors">
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />

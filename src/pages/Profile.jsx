@@ -45,12 +45,17 @@ const Profile = () => {
       <h1 className="text-3xl font-bold mb-8 text-center">Account Overview</h1>
 
       {/* User Info Card */}
-      <div className="bg-white dark:bg-gray-800 shadow-md rounded-xl p-6 flex items-center gap-6">
-        <img
-          src={user.photoURL || '/default-avatar.png'}
-          alt="User Avatar"
-          className="w-16 h-16 rounded-full object-cover border-2 border-blue-600"
-        />
+      <div className="bg-white dark:bg-gray-800 shadow-md rounded-xl p-6 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 text-center sm:text-left">
+        {/* Centered Avatar */}
+        <div className="flex justify-center sm:justify-start w-full sm:w-auto">
+          <img
+            src={user.photoURL || '/default-avatar.png'}
+            alt="User Avatar"
+            className="w-20 h-20 rounded-full object-cover border-2 border-blue-600"
+          />
+        </div>
+
+        {/* User Info */}
         <div className="flex-1">
           <p className="text-lg font-semibold">
             {user.displayName || user.username || user.email}
@@ -59,13 +64,18 @@ const Profile = () => {
             {user.email}
           </p>
         </div>
-        <button
-          onClick={() => navigate('/edit-profile')}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          Edit Profile
-        </button>
+
+        {/* Edit Button */}
+        <div className="mt-4 sm:mt-0 sm:ml-auto">
+          <button
+            onClick={() => navigate('/edit-profile')}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full sm:w-auto"
+          >
+            Edit Profile
+          </button>
+        </div>
       </div>
+
 
       {/* Profile Options */}
       <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -87,14 +97,12 @@ const Profile = () => {
           </span>
           <button
             onClick={() => setDarkMode((prev) => !prev)}
-            className={`w-14 h-7 flex items-center rounded-full p-1 transition duration-300 ${
-              darkMode ? 'bg-gray-800' : 'bg-gray-300'
-            }`}
+            className={`w-14 h-7 flex items-center rounded-full p-1 transition duration-300 ${darkMode ? 'bg-gray-800' : 'bg-gray-300'
+              }`}
           >
             <div
-              className={`w-5 h-5 bg-white rounded-full shadow-md transform transition duration-300 ${
-                darkMode ? 'translate-x-7' : 'translate-x-0'
-              }`}
+              className={`w-5 h-5 bg-white rounded-full shadow-md transform transition duration-300 ${darkMode ? 'translate-x-7' : 'translate-x-0'
+                }`}
             />
           </button>
         </div>
