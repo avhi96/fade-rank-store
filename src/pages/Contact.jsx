@@ -145,13 +145,13 @@ const Contact = () => {
   );
 };
 
-// Info Card with visible borders in all themes
+// Hover-enhanced Info Card
 const InfoCard = ({ icon, title, text, href }) => (
   <a
     href={href}
     target="_blank"
     rel="noopener noreferrer"
-    className="p-6 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg shadow hover:shadow-md transition-all flex flex-col items-center text-center"
+    className="p-6 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg shadow transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-lg  flex flex-col items-center text-center"
   >
     <div className="mb-2">{icon}</div>
     <h3 className="font-bold">{title}</h3>
@@ -159,9 +159,9 @@ const InfoCard = ({ icon, title, text, href }) => (
   </a>
 );
 
-// Feature Section
+// Hover-enhanced Feature Card
 const Feature = ({ icon, title, desc }) => (
-  <div className="flex items-start gap-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-lg shadow hover:shadow-md transition-all">
+  <div className="flex items-start gap-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-lg shadow transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-lg ">
     <div className="text-blue-600 dark:text-blue-400 text-xl mt-1">{icon}</div>
     <div>
       <h4 className="font-semibold">{title}</h4>
@@ -170,7 +170,7 @@ const Feature = ({ icon, title, desc }) => (
   </div>
 );
 
-// Social Icon Component
+// Social Icon Button
 const SocialIcon = ({ href, Icon, color, name }) => (
   <a
     href={href}
@@ -179,7 +179,7 @@ const SocialIcon = ({ href, Icon, color, name }) => (
     className={`text-${color}-600 dark:text-${color}-400 hover:scale-110 transform transition-all`}
     title={name}
   >
-    <Icon size={24} />
+    <Icon size={26} />
   </a>
 );
 

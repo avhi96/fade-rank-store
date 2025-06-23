@@ -7,7 +7,7 @@ import LoadingScreen from './components/LoadingScreen';
 import Home from './pages/Home';
 import Shop from './pages/Shop';
 import Products from './pages/Products';
-import Pricing from './pages/Pricing';
+import Services from './pages/Services';
 import Contact from './pages/Contact';
 import Terms from './pages/Terms';
 import Login from './pages/Login';
@@ -45,7 +45,7 @@ export default function App() {
               <Route path="/shop" element={<Shop />} />
               <Route path="/products" element={<Products />} />
               <Route path="/products/:id" element={<ProductDetails />} />
-              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/services" element={<Services />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/liked" element={<LikedItems />} />

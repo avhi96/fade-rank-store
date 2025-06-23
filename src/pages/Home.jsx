@@ -8,9 +8,10 @@ export default function Home() {
       {/* Animated Title */}
       <h1 className="text-4xl sm:text-5xl font-extrabold mb-4">
         Welcome to{' '}
-        <span className="text-blue-600 font-mono">
+        <span className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent font-mono">
           Fade
         </span>
+
       </h1>
 
       {/* Tagline */}
@@ -21,7 +22,7 @@ export default function Home() {
       {/* CTA */}
       <Link
         to="/shop"
-        className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+        className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded shadow hover:opacity-90"
       >
         Start Shopping
       </Link>
