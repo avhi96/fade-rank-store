@@ -36,7 +36,7 @@ export default function Home() {
       <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl">
         {[
           { icon: '⚡', title: 'Fast Delivery', desc: 'Instant email delivery for digital goods.' },
-          { icon: '🔒', title: 'Secure Payments', desc: 'Powered by Razorpay & protected by Firebase.' },
+          { icon: '🔒', title: 'Secure Payments', desc: 'Powered by Phonepay & protected by Firebase.' },
           { icon: '💬', title: '24/7 Support', desc: 'Need help? We’re always here to assist you.' },
         ].map((feature, i) => (
           <div

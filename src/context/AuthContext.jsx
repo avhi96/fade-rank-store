@@ -3,7 +3,7 @@ import { auth } from "../firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 
 const AuthContext = createContext();
-const ADMIN_EMAIL = "avhi5949@gmail.com";
+const ADMIN_EMAIL = "nyxu013@gmail.com";
 
 export const useAuth = () => useContext(AuthContext);
 
