@@ -9,13 +9,7 @@ export default function Home() {
       <h1 className="text-4xl sm:text-5xl font-extrabold mb-4">
         Welcome to{' '}
         <span className="text-blue-600 font-mono">
-          <Typewriter
-            words={['Fade', 'Ｆａｄｅ', '𝓕𝓪𝓭𝓮', '𝙁𝘼𝘿𝙀', 'Fade']}
-            loop={0}
-            typeSpeed={200}
-            deleteSpeed={130}
-            delaySpeed={2000}
-          />
+          Fade
         </span>
       </h1>
 

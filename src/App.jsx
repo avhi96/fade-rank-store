@@ -1,7 +1,9 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { DarkModeProvider } from './context/DarkModeContext';
 import { AuthProvider, useAuth, isAdmin } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
+import LoadingScreen from './components/LoadingScreen';
 import Home from './pages/Home';
 import Shop from './pages/Shop';
 import Products from './pages/Products';
@@ -21,6 +23,14 @@ import EditProfile from './pages/EditProfile';
 
 export default function App() {
   const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 2000); // 2 seconds
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) return <LoadingScreen />;
+
 
   return (
     <DarkModeProvider>
