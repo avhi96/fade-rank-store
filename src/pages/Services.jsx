@@ -96,7 +96,7 @@ const Services = () => {
               key={service.id}
               className={`relative group flex flex-col justify-between text-center 
               bg-white dark:bg-gray-800 border rounded-2xl shadow-md dark:border-gray-700 
-              transition transform hover:scale-105 duration-300 p-6 w-full max-w-sm`}
+              transition transform hover:scale-105 duration-300 p-6 w-full max-w-sm `}
             >
               {index === 1 && (
                 <span className="absolute top-2 right-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full uppercase font-bold">
@@ -106,7 +106,7 @@ const Services = () => {
               <div className="mb-4 flex justify-center text-4xl">{service.icon}</div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">{service.title}</h2>
               <p className="text-sm text-gray-600 dark:text-gray-300 my-2">{service.description}</p>
-              <div className="text-3xl font-bold text-blue-600 my-4 transition-all duration-300 group-hover:text-blue-500 group-hover:drop-shadow-[0_0_12px_#3b82f6]">
+              <div className="text-3xl font-bold text-blue-600 my-4 transition-all duration-300">
                 ₹{service.price}
               </div>
               <button

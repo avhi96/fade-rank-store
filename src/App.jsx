@@ -35,16 +35,19 @@ export default function App() {
   return (
     <DarkModeProvider>
       <AuthProvider>
-        <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white">
-          {/* Sidebar */}
-<div className="hidden md:block fixed top-0 left-0 h-full w-64 z-40 border-r border-gray-300 dark:border-gray-700">
+        <div className="flex h-screen overflow-hidden bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white">
 
+          {/* Fixed Sidebar */}
+          <div className="hidden md:block fixed top-0 left-0 h-full w-64 z-40 border-r border-gray-300 dark:border-gray-700">
             <Sidebar />
           </div>
 
+          {/* Sidebar Button + Slide-in Sidebar for Mobile */}
+          <Sidebar />
+
           {/* Main Content */}
-          <div className="flex-1 ml-0 md:ml-64 overflow-y-auto w-full">
-            <div className="max-w-6xl w-full px-4 sm:px-6 lg:px-8 py-8 mx-auto">
+          <div className="flex-1 ml-0 md:ml-1 overflow-y-auto">
+            <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
@@ -60,14 +63,18 @@ export default function App() {
                 <Route path="/orders" element={<MyOrders />} />
                 <Route path="/edit-profile" element={<PrivateRoute><EditProfile /></PrivateRoute>} />
                 <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
-                <Route path="/admin" element={
-                  <PrivateRoute>
-                    {isAdmin(user) ? <Admin /> : <Navigate to="/" />}
-                  </PrivateRoute>
-                } />
+                <Route
+                  path="/admin"
+                  element={
+                    <PrivateRoute>
+                      {isAdmin(user) ? <Admin /> : <Navigate to="/" />}
+                    </PrivateRoute>
+                  }
+                />
               </Routes>
             </div>
           </div>
+
         </div>
       </AuthProvider>
     </DarkModeProvider>

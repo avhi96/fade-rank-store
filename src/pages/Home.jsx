@@ -30,7 +30,7 @@ export default function Home() {
           </Link>
           <Link
             to="/contact"
-            className="px-6 py-2 border border-purple-600 text-purple-600 rounded hover:bg-purple-600 hover:text-white transition"
+            className="px-6 py-2 border border-purple-600 text-purple-600 rounded hover:bg-purple-600 hover:text-white transition "
           >
             Contact Us
           </Link>

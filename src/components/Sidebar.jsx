@@ -23,17 +23,17 @@ const Sidebar = () => {
 
   return (
     <>
-      {/* Hamburger Menu (Mobile) */}
-      <div className="md:hidden fixed top-4 left-4 z-50">
+      {/* Hamburger Button (Mobile only) */}
+      <div className="md:hidden fixed top-4 left-4 z-[9999]">
         <button
-          onClick={() => setOpen(!open)}
+          onClick={() => setOpen(true)}
           className="text-white bg-gray-800 p-2 rounded-md"
         >
-          {open ? <FaTimes size={20} /> : <FaBars size={20} />}
+          <FaBars size={20} />
         </button>
       </div>
 
-      {/* Overlay */}
+      {/* Overlay when Sidebar open on mobile */}
       {open && (
         <div
           className="fixed inset-0 bg-black bg-opacity-40 z-40 md:hidden"
@@ -43,16 +43,28 @@ const Sidebar = () => {
 
       {/* Sidebar */}
       <div
-        className={`fixed md:static top-0 left-0 h-full md:h-screen w-60 bg-gray-900 text-white z-50 flex flex-col justify-between transition-transform duration-300 ease-in-out
-        ${open ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
+        className={`fixed md:static top-0 left-0 h-full md:h-screen w-60 bg-gray-900 text-white z-50 
+  flex flex-col justify-between transform transition-transform duration-300 ease-in-out
+  ${open ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
       >
+
+        {/* Close button (Mobile only) */}
+        <div className="md:hidden flex justify-end p-4">
+          <button
+            onClick={() => setOpen(false)}
+            className="text-white bg-gray-800 p-2 rounded-md"
+          >
+            <FaTimes size={20} />
+          </button>
+        </div>
+
         {/* Sidebar Content */}
-        <div className="flex-1 p-5 overflow-y-auto">
+        <div className="flex-1 px-5 pb-4 overflow-y-auto">
           {/* Logo */}
           <img
-            className="mb-5 w-20 mx-auto"
+            className="mb-6 w-20 mx-auto"
             src="/fade-icon.png"
-            alt="Fade"
+            alt="Fade Logo"
           />
 
           {/* Navigation Links */}
@@ -63,9 +75,8 @@ const Sidebar = () => {
                 to={link.to}
                 onClick={() => setOpen(false)}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 p-3 rounded-md transition-all ${
-                    isActive ? 'bg-blue-600 font-semibold' : 'hover:bg-gray-700'
-                  }`
+                  `flex items-center gap-3 p-3 rounded-md transition-all duration-200 
+                  ${isActive ? 'bg-blue-600 font-semibold' : 'hover:bg-gray-700'}`
                 }
               >
                 <span className="text-lg">{link.icon}</span>
@@ -78,9 +89,8 @@ const Sidebar = () => {
                 to="/admin"
                 onClick={() => setOpen(false)}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 p-3 rounded-md transition-all ${
-                    isActive ? 'bg-blue-700 font-semibold' : 'hover:bg-gray-700 text-blue-400'
-                  }`
+                  `flex items-center gap-3 p-3 rounded-md transition-all duration-200 
+                  ${isActive ? 'bg-blue-700 font-semibold' : 'hover:bg-gray-700 text-blue-400'}`
                 }
               >
                 <FaTools className="text-lg" />
@@ -96,7 +106,7 @@ const Sidebar = () => {
             <NavLink
               to="/profile"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-2 p-3 bg-blue-600 rounded justify-center hover:bg-blue-700"
+              className="flex items-center gap-2 p-3 bg-blue-600 rounded justify-center hover:bg-blue-700 transition"
             >
               <FaUserCircle size={20} />
               <span>My Profile</span>
@@ -106,14 +116,14 @@ const Sidebar = () => {
               <NavLink
                 to="/login"
                 onClick={() => setOpen(false)}
-                className="bg-blue-600 text-white text-center px-3 py-2 rounded hover:bg-blue-700"
+                className="bg-blue-600 text-white text-center px-3 py-2 rounded hover:bg-blue-700 transition"
               >
                 Login
               </NavLink>
               <NavLink
                 to="/signup"
                 onClick={() => setOpen(false)}
-                className="bg-green-600 text-white text-center px-3 py-2 rounded hover:bg-green-700"
+                className="bg-green-600 text-white text-center px-3 py-2 rounded hover:bg-green-700 transition"
               >
                 Signup
               </NavLink>
