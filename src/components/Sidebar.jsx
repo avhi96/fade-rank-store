@@ -21,7 +21,7 @@ const Sidebar = () => {
   return (
     <div className="fixed top-0 left-0 h-screen w-60 bg-gray-900 text-white p-5 flex flex-col justify-between z-50">
       <div>
-        <h2 className="text-center text-xl font-bold mb-8 tracking-wider"><img src="/client/public/fade-icon.png" alt="" />Fade</h2>
+        <h2 className="text-center text-xl font-bold mb-8 tracking-wider"><img src="/client/public/fade-icon.png" alt="Fade" /></h2>
         <div className="flex flex-col gap-3">
           {links.map(link => (
             <NavLink
