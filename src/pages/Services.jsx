@@ -29,11 +29,13 @@ const Services = () => {
 
     try {
       await addDoc(collection(db, 'orders'), {
-        userid: user.uid,
+        userId: user.uid,
         email: user.email,
+        name: user.displayName || "Unknown",
         serviceId: selectedService.id,
         serviceTitle: selectedService.title,
         price: selectedService.price,
+        status: "pending",
         createdAt: serverTimestamp(),
       });
 
@@ -75,6 +77,8 @@ const Services = () => {
       setLoading(false);
     }
   };
+
+
 
   const premiumServices = services.slice(0, 3);
   const additionalServices = services.slice(3);
@@ -146,7 +150,7 @@ const Services = () => {
                     <div>
                       <h3 className="text-base font-semibold text-gray-800 dark:text-white">{service.title}</h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400">{service.description}</p>
-                      <span className="text-blue-600 font-bold transition-all duration-300 group-hover:text-blue-500 group-hover:drop-shadow-[0_0_12px_#3b82f6]">
+                      <span className="text-blue-600 font-bold transition-all duration-300">
                         ₹{service.price}
                       </span>
                     </div>

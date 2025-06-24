@@ -7,7 +7,7 @@ import {
   getDocs,
   orderBy,
   deleteDoc,
-  doc
+  doc,
 } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
@@ -17,86 +17,166 @@ const MyOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [showModal, setShowModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
   useEffect(() => {
     if (!user) return;
 
-    const fetchOrders = async () => {
+    const fetchAllOrders = async () => {
       try {
-        const q = query(
+        const serviceQuery = query(
           collection(db, 'orders'),
-          where('userid', '==', user.uid),
+          where('userId', '==', user.uid),
+          orderBy('createdAt', 'desc')
+        );
+        const productQuery = query(
+          collection(db, 'productOrders'),
+          where('userId', '==', user.uid),
           orderBy('createdAt', 'desc')
         );
 
-        const snap = await getDocs(q);
-        const orderList = snap.docs.map(doc => ({
+        const [serviceSnap, productSnap] = await Promise.all([
+          getDocs(serviceQuery),
+          getDocs(productQuery),
+        ]);
+
+        const serviceOrders = serviceSnap.docs.map(doc => ({
           id: doc.id,
+          type: 'service',
           ...doc.data(),
         }));
-        setOrders(orderList);
+        const productOrders = productSnap.docs.map(doc => ({
+          id: doc.id,
+          type: 'product',
+          ...doc.data(),
+        }));
+
+        const combined = [...serviceOrders, ...productOrders];
+        combined.sort((a, b) => b.createdAt?.toMillis() - a.createdAt?.toMillis());
+
+        setOrders(combined);
       } catch (err) {
-        console.error("Error fetching orders:", err);
+        toast.error(`Error loading orders: ${err.message}`);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchOrders();
+    fetchAllOrders();
   }, [user]);
 
-  const handleCancelOrder = async (orderId) => {
+  const confirmCancelOrder = (order) => {
+    setSelectedOrder(order);
+    setShowModal(true);
+  };
+
+  const handleCancelConfirmed = async () => {
+    const orderId = selectedOrder.id;
+    const type = selectedOrder.type;
+    const collectionName = type === 'product' ? 'productOrders' : 'orders';
+
     try {
-      await deleteDoc(doc(db, 'orders', orderId));
+      await deleteDoc(doc(db, collectionName, orderId));
       setOrders(prev => prev.filter(order => order.id !== orderId));
-      toast.success("Order cancelled");
+      toast.success('Order cancelled successfully');
     } catch (err) {
-      console.error("Error cancelling order:", err);
+      toast.error('Failed to cancel order.');
+    } finally {
+      setShowModal(false);
+      setSelectedOrder(null);
     }
   };
 
-  if (!user) return (
-    <p className="text-center text-gray-500 mt-10">
-      Please login to view your orders.
-    </p>
-  );
-
-  if (loading) return (
-    <p className="text-center text-gray-500 mt-10">
-      Loading orders...
-    </p>
-  );
+  if (!user) return <p className="text-center text-gray-500 mt-10">Please login to view your orders.</p>;
+  if (loading) return <p className="text-center text-gray-500 mt-10">Loading orders...</p>;
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-10">
-      <h1 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white">
-        My Orders
-      </h1>
+    <div className="max-w-7xl mx-auto px-4 py-10">
+      <h1 className="text-3xl font-bold mb-6 text-center text-gray-800 dark:text-white">📋 My Orders</h1>
 
       {orders.length === 0 ? (
-        <p className="text-center text-gray-500 mt-4">No orders found.</p>
+        <p className="text-center text-gray-500">No orders placed yet.</p>
       ) : (
-        orders.map(order => (
-          <div key={order.id} className="p-4 border rounded-lg bg-white dark:bg-gray-800 mb-4">
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
-              {order.serviceTitle}
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Price: ₹{order.price}
-            </p>
-            <p className="text-xs text-gray-400 mt-1">
-              {order.createdAt?.toDate().toLocaleString() || 'Date not available'}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left border border-gray-300 dark:border-gray-700">
+            <thead className="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 uppercase text-xs">
+              <tr>
+                <th className="p-3">Image</th>
+                <th className="p-3">Name</th>
+                <th className="p-3">Type</th>
+                <th className="p-3">Price</th>
+                <th className="p-3">Date</th>
+                <th className="p-3">Status</th>
+                <th className="p-3">Action</th>
+              </tr>
+            </thead>
+            <tbody className="text-gray-700 dark:text-gray-300">
+              {orders.map(order => (
+                <tr key={order.id} className="border-t border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <td className="p-3">
+                    {order.image ? (
+                      <img src={order.image} alt="thumb" className="w-14 h-14 object-cover rounded-md" />
+                    ) : (
+                      <div className="w-14 h-14 bg-gray-200 dark:bg-gray-600 flex items-center justify-center rounded-md text-gray-400 text-xs">📷</div>
+                    )}
+                  </td>
+                  <td className="p-3 font-medium">{order.serviceTitle || order.productName || 'Unnamed Order'}</td>
+                  <td className="p-3">
+                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${order.type === 'product' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'}`}>
+                      {order.type === 'product' ? 'Product' : 'Service'}
+                    </span>
+                  </td>
+                  <td className="p-3">₹{order.price}</td>
+                  <td className="p-3">{order.createdAt?.toDate().toLocaleString() || 'N/A'}</td>
+                  <td className="p-3">
+                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${order.status === 'completed' ? 'bg-green-200 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-yellow-200 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'}`}>
+                      {order.status || 'Pending'}
+                    </span>
+                  </td>
+                  <td className="p-3">
+                    <button
+                      onClick={() => confirmCancelOrder(order)}
+                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 text-xs rounded"
+                    >
+                      Cancel ❌
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* ✅ Cancel Confirmation Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Cancel Order</h2>
+            <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
+              Are you sure you want to cancel this order?
             </p>
 
-            <div className="mt-4 text-right">
+            <div className="flex justify-end gap-3">
               <button
-                onClick={() => handleCancelOrder(order.id)}
-                className="bg-red-600 text-white px-4 py-1 rounded hover:bg-red-700 text-sm"
+                onClick={() => {
+                  setShowModal(false);
+                  setSelectedOrder(null);
+                }}
+                className="bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded"
               >
-                Cancel Order
+                No, Go Back
+              </button>
+              <button
+                onClick={handleCancelConfirmed}
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+              >
+                Yes, Cancel Order
               </button>
             </div>
           </div>
-        ))
+        </div>
       )}
     </div>
   );
