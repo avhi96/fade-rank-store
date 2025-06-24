@@ -39,7 +39,7 @@ const Services = () => {
         createdAt: serverTimestamp(),
       });
 
-      await fetch("https://discord.com/api/webhooks/XXX", {
+      await fetch("https://discord.com/api/webhooks/1386632879911473163/jUXgwn-YBRvpM03kGc9-yvvOFGJbkEkexqL6XFLdrr8oEc3tjNqmN7J7k0Ci1w8W0Vdr", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
