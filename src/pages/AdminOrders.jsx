@@ -64,7 +64,7 @@ const AdminOrders = () => {
                     order.id === orderId ? { ...order, status: 'completed' } : order
                 )
             );
-            toast.success("✅ Order marked as completed");
+            toast.success(" Order marked as completed");
         } catch (err) {
             console.error("Error completing order:", err);
             toast.error("Failed to update status");
