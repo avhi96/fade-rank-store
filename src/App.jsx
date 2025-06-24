@@ -12,6 +12,7 @@ import Contact from './pages/Contact';
 import Terms from './pages/Terms';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import ForgotPassword from './pages/ForgetPassword';
 import PrivateRoute from './components/PrivateRoute';
 import Profile from './pages/Profile';
 import Admin from './pages/Admin';
@@ -55,6 +56,7 @@ export default function App() {
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/" element={<Home />} />
                 <Route path="/shop" element={<Shop />} />
                 <Route path="/products" element={<Products />} />
