@@ -91,40 +91,52 @@ const Services = () => {
 
         {/* Premium Cards */}
         <div className="flex flex-col md:flex-row justify-center items-stretch gap-8 mb-20">
-          {premiumServices.map((service, index) => (
-            <div
-              key={service.id}
-              className={`relative group flex flex-col justify-between text-center 
-              bg-white dark:bg-gray-800 border rounded-2xl shadow-md dark:border-gray-700 
-              transition transform hover:scale-105 duration-300 p-6 w-full max-w-sm `}
-            >
-              {index === 1 && (
-                <span className="absolute top-2 right-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full uppercase font-bold">
-                  Recommended
-                </span>
-              )}
-              <div className="mb-4 flex justify-center text-4xl">{service.icon}</div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">{service.title}</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-300 my-2">{service.description}</p>
-              <div className="text-3xl font-bold text-blue-600 my-4 transition-all duration-300">
-                ₹{service.price}
-              </div>
-              <button
-                onClick={() => handleOrderClick(service)}
-                className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
+          {premiumServices.map((service, index) => {
+            const isRecommended = index === 1;
+
+            // Define order based on index
+            const orderClass = isRecommended
+              ? 'order-1 md:order-2'
+              : index === 0
+                ? 'order-2 md:order-1'
+                : 'order-3 md:order-3';
+
+            return (
+              <div
+                key={service.id}
+                className={`relative group flex flex-col justify-between text-center 
+        bg-white dark:bg-gray-800 border rounded-2xl shadow-md dark:border-gray-700 
+        transition transform hover:scale-105 duration-300 p-6 w-full max-w-sm ${orderClass}`}
               >
-                Get Started
-              </button>
-            </div>
-          ))}
+                {isRecommended && (
+                  <span className="absolute top-2 right-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full uppercase font-bold">
+                    Recommended
+                  </span>
+                )}
+                <div className="mb-4 flex justify-center text-4xl">{service.icon}</div>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">{service.title}</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-300 my-2">{service.description}</p>
+                <div className="text-3xl font-bold text-blue-600 my-4 transition-all duration-300">
+                  ₹{service.price}
+                </div>
+                <button
+                  onClick={() => handleOrderClick(service)}
+                  className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
+                >
+                  Get Started
+                </button>
+              </div>
+            );
+          })}
         </div>
+
 
         {/* Additional Services */}
         {additionalServices.length > 0 && (
           <>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Additional Services</h2>
             <div className="space-y-4 max-w-6xl mx-auto text-left">
-              {additionalServices.map((service, index) => (
+              {additionalServices.map((service) => (
                 <div
                   key={service.id}
                   className="group flex justify-between items-center bg-white dark:bg-gray-800 px-4 py-3 border dark:border-gray-700 rounded-lg transition hover:shadow-md hover:border-blue-500 hover:scale-[1.01]"

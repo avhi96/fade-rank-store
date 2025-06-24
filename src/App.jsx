@@ -35,12 +35,16 @@ export default function App() {
   return (
     <DarkModeProvider>
       <AuthProvider>
-        <div className="flex h-screen overflow-hidden bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white">
+        <div className="flex h-screen overflow-hidden bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
 
           {/* Fixed Sidebar */}
-          <div className="hidden md:block fixed top-0 left-0 h-full w-64 z-40 border-r border-gray-300 dark:border-gray-700">
+          <div className="hidden md:block fixed top-0 left-0 h-full w-64 z-40 bg-white dark:bg-gray-900">
             <Sidebar />
+
+            {/* Separator line only in dark mode */}
+            <div className="absolute top-0 right-3 h-full w-px bg-transparent dark:bg-gray-700" />
           </div>
+
 
           {/* Sidebar Button + Slide-in Sidebar for Mobile */}
           <Sidebar />
