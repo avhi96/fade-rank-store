@@ -139,14 +139,37 @@ const ProductDetail = () => {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto dark:bg-gray-900 dark:text-white">
+    <div className="min-h-screen px-4 sm:px-6 lg:px-8 py-8 max-w-screen-xl mx-auto dark:bg-gray-900 dark:text-white">
       <div className="grid md:grid-cols-2 gap-10">
-        <Carousel showArrows autoPlay infiniteLoop className="rounded shadow">
-          <div><img src={item.image} alt="Main" /></div>
-          {item.images?.map((url, i) => (
-            <div key={i}><img src={url} alt={`Slide ${i + 1}`} /></div>
-          ))}
-        </Carousel>
+        <div className="w-full max-w-full">
+          <Carousel
+            showArrows
+            autoPlay
+            infiniteLoop
+            showThumbs={false}
+            emulateTouch
+            className="rounded shadow"
+          >
+            <div>
+              <img
+                src={item.image}
+                alt="Main"
+                className="object-contain max-h-[400px] w-full mx-auto"
+              />
+            </div>
+            {item.images?.map((url, i) => (
+              <div key={i}>
+                <img
+                  src={url}
+                  alt={`Slide ${i + 1}`}
+                  className="object-contain max-h-[400px] w-full mx-auto"
+                />
+              </div>
+            ))}
+          </Carousel>
+        </div>
+
+
 
         <div className="space-y-6">
           <h1 className="text-3xl font-bold text-gray-800 dark:text-white">{item.name}</h1>
@@ -165,7 +188,7 @@ const ProductDetail = () => {
             )}
           </div>
 
-          <div className="flex gap-4 flex-wrap">
+          <div className="flex flex-wrap gap-3 sm:gap-4">
             <button
               onClick={handleLike}
               className={`flex items-center gap-2 px-4 py-2 rounded ${liked
