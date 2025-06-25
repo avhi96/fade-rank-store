@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   createUserWithEmailAndPassword,
   updateProfile
@@ -17,6 +17,16 @@ const Signup = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+  };
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -62,11 +72,20 @@ const Signup = () => {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-green-100 to-blue-100 dark:from-gray-900 dark:to-gray-900 transition-all duration-300">
-      <div className="w-full max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl rounded-2xl p-8 z-10">
-        <h2 className="text-3xl font-bold text-center mb-6 text-gray-800 dark:text-white">
-          Create Your Account
-        </h2>
+    <div className="flex items-center justify-center min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300 px-4">
+      {/* Theme Toggle */}
+      <div className="absolute top-4 right-4">
+        <button
+          onClick={toggleTheme}
+          className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-3 py-1 mr-5 rounded-full shadow hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+        >
+          {theme === 'dark' ? '☀️' : '🌙 '}
+        </button>
+      </div>
+
+      {/* Form Container */}
+      <div className="w-full max-w-md bg-white dark:bg-gray-800 text-gray-800 dark:text-white shadow-lg rounded-xl p-8 border border-gray-200 dark:border-gray-700">
+        <h2 className="text-3xl font-bold text-center mb-6">Create Your Account</h2>
 
         <form onSubmit={handleSignup} className="space-y-4">
           <input
@@ -76,7 +95,7 @@ const Signup = () => {
             required
             placeholder="Username"
             onKeyDown={(e) => e.key === 'Enter' && handleSignup(e)}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-400"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-400"
           />
           <input
             name="email"
@@ -86,7 +105,7 @@ const Signup = () => {
             required
             placeholder="Email Address"
             onKeyDown={(e) => e.key === 'Enter' && handleSignup(e)}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-400"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-400"
           />
           <input
             name="password"
@@ -96,7 +115,7 @@ const Signup = () => {
             required
             placeholder="Password (min 6 characters)"
             onKeyDown={(e) => e.key === 'Enter' && handleSignup(e)}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-400"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-400"
           />
           {error && (
             <p className="text-red-500 text-sm text-center">{error}</p>
@@ -105,13 +124,13 @@ const Signup = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-md transition-all duration-200"
+            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded transition-all duration-200"
           >
             {loading ? 'Creating...' : 'Sign Up'}
           </button>
         </form>
 
-        <p className="text-sm text-center text-gray-600 dark:text-gray-400 mt-4">
+        <p className="text-sm text-center text-gray-500 dark:text-gray-400 mt-4">
           Already have an account?{' '}
           <a href="/login" className="text-blue-600 hover:underline">
             Login

@@ -19,10 +19,21 @@ const Login = () => {
   const location = useLocation();
   const { user } = useAuth();
   const from = location.state?.from?.pathname || '/';
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+  };
 
   useEffect(() => {
     if (user) navigate(from, { replace: true });
   }, [user, navigate, from]);
+
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -87,6 +98,15 @@ const Login = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300 px-4">
+      <div className="absolute top-4 right-4">
+        <button
+          onClick={toggleTheme}
+          className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-3 mr-5 py-1 rounded-full shadow hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+        >
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
+      </div>
+
       <div className="w-full max-w-md bg-white dark:bg-gray-800 text-gray-800 dark:text-white shadow-lg rounded-xl p-8 border border-gray-200 dark:border-gray-700">
         <h1 className="text-3xl font-bold text-center mb-6">Login to Fade</h1>
 

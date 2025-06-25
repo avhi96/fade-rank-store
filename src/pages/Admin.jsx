@@ -153,9 +153,9 @@ const Admin = () => {
       {tab === 'createProduct' && (
         <form
           onSubmit={handleCreateProduct}
-          className="bg-gray-900 text-white shadow-md rounded-lg p-8 max-w-3xl mx-auto space-y-6 border border-gray-700"
+          className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-md rounded-lg p-8 max-w-3xl mx-auto space-y-6 border border-gray-200 dark:border-gray-700"
         >
-          <h2 className="text-2xl font-semibold text-center text-white mb-6">
+          <h2 className="text-2xl font-semibold text-center mb-6">
             🛒 Create a New Product
           </h2>
 
@@ -166,7 +166,7 @@ const Admin = () => {
                 type="text"
                 value={formData.name}
                 onChange={e => setFormData({ ...formData, name: e.target.value })}
-                className="w-full rounded-md border border-gray-600 bg-gray-900 text-white placeholder-gray-400 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
             </div>
@@ -177,7 +177,7 @@ const Admin = () => {
                 type="number"
                 value={formData.price}
                 onChange={e => setFormData({ ...formData, price: e.target.value })}
-                className="w-full rounded-md border border-gray-600 bg-gray-900 text-white placeholder-gray-400 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
             </div>
@@ -189,7 +189,7 @@ const Admin = () => {
               rows="4"
               value={formData.description}
               onChange={e => setFormData({ ...formData, description: e.target.value })}
-              className="w-full rounded-md border border-gray-600 bg-gray-900 text-white placeholder-gray-400 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
@@ -197,21 +197,21 @@ const Admin = () => {
           {/* Main Image */}
           <div>
             <label className="block mb-2">Main Image</label>
-            <div className="border-2 border-dashed border-gray-600 rounded-md p-4 bg-gray-800">
+            <div className="border-2 border-dashed border-gray-400 dark:border-gray-600 rounded-md p-4 bg-gray-100 dark:bg-gray-800">
               <input
                 type="file"
                 accept="image/*"
                 onChange={e => setMainImageFile(e.target.files[0])}
-                className="text-sm text-white"
+                className="text-sm text-gray-900 dark:text-gray-200"
               />
             </div>
-            <p className="text-sm text-gray-400 mt-2">Or paste an image URL below:</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Or paste an image URL below:</p>
             <input
               type="url"
               placeholder="https://example.com/image.jpg"
               value={formData.mainImageURL}
               onChange={e => setFormData({ ...formData, mainImageURL: e.target.value })}
-              className="w-full mt-2 rounded-md border border-gray-600 bg-gray-900 text-white placeholder-gray-500 px-4 py-2"
+              className="w-full mt-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 px-4 py-2"
             />
           </div>
 
@@ -220,7 +220,7 @@ const Admin = () => {
             <img
               src={mainImageFile ? URL.createObjectURL(mainImageFile) : formData.mainImageURL}
               alt="Preview"
-              className="w-full max-h-48 object-cover mt-4 rounded-md border border-gray-700"
+              className="w-full max-h-48 object-cover mt-4 rounded-md border border-gray-300 dark:border-gray-700"
             />
           )}
 
@@ -231,15 +231,15 @@ const Admin = () => {
               type="file"
               multiple
               onChange={e => setOtherImageFiles([...e.target.files])}
-              className="text-sm text-white"
+              className="text-sm text-gray-900 dark:text-gray-200"
             />
-            <p className="text-sm text-gray-400 mt-2">Or paste comma-separated URLs below:</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Or paste comma-separated URLs below:</p>
             <input
               type="text"
               placeholder="https://img1.jpg, https://img2.jpg"
               value={formData.otherImageURLs}
               onChange={e => setFormData({ ...formData, otherImageURLs: e.target.value })}
-              className="w-full mt-2 rounded-md border border-gray-600 bg-gray-900 text-white placeholder-gray-500 px-4 py-2"
+              className="w-full mt-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 px-4 py-2"
             />
           </div>
 
