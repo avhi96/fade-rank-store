@@ -138,7 +138,7 @@ const Contact = () => {
             <SocialIcon href="https://www.facebook.com/profile.php?id=61577757806514" Icon={FaFacebookF} color="blue" name="Facebook" />
             <SocialIcon href="https://www.youtube.com/@FadeNetwork013" Icon={FaYoutube} color="red" name="YouTube" />
           </div>
-          <p className="text-gray-500 dark:text-gray-400 mt-6 text-sm">© 2025 FadeMart. All rights reserved.</p>
+          <p className="text-gray-500 dark:text-gray-400 mt-6 text-sm">© 2025 Fade. All rights reserved.</p>
         </div>
       </div>
     </div>
