@@ -62,4 +62,12 @@ html, body, #root {
   animation: fade-in 0.6s ease-out both;
 }
 
+.submitBtn {
+  @apply mt-2 w-full bg-green-600 hover:bg-green-700 text-white py-1 px-3 rounded;
+}
+.deleteBtn {
+  @apply mt-2 w-full bg-red-600 hover:bg-red-700 text-white py-1 px-3 rounded;
+}
+
+
 

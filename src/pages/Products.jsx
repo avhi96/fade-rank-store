@@ -1,3 +1,4 @@
+// src/pages/Products.jsx
 import React, { useEffect, useState } from 'react';
 import { db } from '../firebase';
 import { collection, getDocs } from 'firebase/firestore';
@@ -11,7 +12,7 @@ const Products = () => {
       try {
         const snapshot = await getDocs(collection(db, 'products'));
         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setProducts(data);
+        setProducts(data.slice(0, 6)); // 👈 show only first 6
       } catch (err) {
         console.error('Failed to fetch products:', err);
       }
@@ -30,38 +31,47 @@ const Products = () => {
         {products.length === 0 ? (
           <p className="text-center text-gray-500 dark:text-gray-400">No Products Available</p>
         ) : (
-          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
-            {products.map(product => (
-              <Link to={`/products/${product.id}`} key={product.id}>
-                <div className="bg-white dark:bg-[#0f172a] rounded-xl shadow-md hover:shadow-xl transition-all border border-gray-700 overflow-hidden flex flex-col group relative">
-                  {/* Optional Glow */}
-                  <div className="absolute -inset-1 bg-blue-600 blur-lg opacity-0 group-hover:opacity-10 transition-all rounded-xl z-0" />
+          <>
+            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+              {products.map(product => (
+                <Link to={`/products/${product.id}`} key={product.id}>
+                  <div className="bg-white dark:bg-[#0f172a] rounded-xl shadow-md hover:shadow-xl transition-all border border-gray-700 overflow-hidden flex flex-col group relative">
+                    <div className="absolute -inset-1 bg-blue-600 blur-lg opacity-0 group-hover:opacity-10 transition-all rounded-xl z-0" />
 
-                  <img
-                    src={product.image || '/placeholder.jpg'}
-                    alt={product.name}
-                    className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105 z-10"
-                  />
+                    <img
+                      src={product.image || '/placeholder.jpg'}
+                      alt={product.name}
+                      className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105 z-10"
+                    />
 
-                  <div className="p-4 text-white flex flex-col flex-1 justify-between z-10 relative">
-                    <div>
-                      <h2 className="text-lg font-semibold leading-tight text-gray-900 dark:text-white">{product.name}</h2>
-                      <p className="text-blue-600 dark:text-blue-400 font-bold mt-3 text-base">
-                        ₹{product.price}
-                      </p>
+                    <div className="p-4 text-white flex flex-col flex-1 justify-between z-10 relative">
+                      <div>
+                        <h2 className="text-lg font-semibold leading-tight text-gray-900 dark:text-white">
+                          {product.name}
+                        </h2>
+                        <p className="text-blue-600 dark:text-blue-400 font-bold mt-3 text-base">
+                          ₹{product.price}
+                        </p>
+                      </div>
+                      <span className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm text-center py-2 rounded-md">
+                        Purchase Now
+                      </span>
                     </div>
-
-                    <a
-                      href="#"
-                      className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm text-center py-2 rounded-md"
-                    >
-                      Purchase Now
-                    </a>
                   </div>
-                </div>
+                </Link>
+              ))}
+            </div>
+
+            {/* Show More Button */}
+            <div className="text-center mt-10">
+              <Link
+                to="/products/all"
+                className="inline-block bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
+              >
+                Show More Products
               </Link>
-            ))}
-          </div>
+            </div>
+          </>
         )}
       </div>
     </div>

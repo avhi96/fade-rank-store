@@ -58,7 +58,7 @@ const ProductDetail = () => {
   }, [id, user]);
 
   const handleLike = async () => {
-    if (!user) return toast.error("Login to like items.");
+    if (!user) return navigate('/login');
     const ref = doc(db, 'users', user.uid, 'likedItems', id);
     if (liked) {
       await deleteDoc(ref);
@@ -79,7 +79,7 @@ const ProductDetail = () => {
   };
 
   const handleSubmitReview = async () => {
-    if (!user) return toast.error("Login to leave a review.");
+    if (!user) return navigate('/login');
     if (rating === 0 || reviewText.trim().length < 3) {
       toast.error("Please write a review and select rating.");
       return;
@@ -142,34 +142,40 @@ const ProductDetail = () => {
     <div className="min-h-screen px-4 sm:px-6 lg:px-8 py-8 max-w-screen-xl mx-auto dark:bg-gray-900 dark:text-white">
       <div className="grid md:grid-cols-2 gap-10">
         <div className="w-full max-w-full">
-          <Carousel
-            showArrows
-            autoPlay
-            infiniteLoop
-            showThumbs={false}
-            emulateTouch
-            className="rounded shadow"
-          >
-            <div>
-              <img
-                src={item.image}
-                alt="Main"
-                className="object-contain max-h-[400px] w-full mx-auto"
-              />
-            </div>
-            {item.images?.map((url, i) => (
-              <div key={i}>
+          {item.images?.length > 0 ? (
+            <Carousel
+              showArrows
+              autoPlay
+              infiniteLoop
+              showThumbs={false}
+              emulateTouch
+              className="rounded shadow"
+            >
+              <div>
                 <img
-                  src={url}
-                  alt={`Slide ${i + 1}`}
+                  src={item.image}
+                  alt="Main"
                   className="object-contain max-h-[400px] w-full mx-auto"
                 />
               </div>
-            ))}
-          </Carousel>
+              {item.images.map((url, i) => (
+                <div key={i}>
+                  <img
+                    src={url}
+                    alt={`Slide ${i + 1}`}
+                    className="object-contain max-h-[400px] w-full mx-auto"
+                  />
+                </div>
+              ))}
+            </Carousel>
+          ) : (
+            <img
+              src={item.image}
+              alt="Main"
+              className="object-contain max-h-[350px] w-full mx-auto rounded shadow"
+            />
+          )}
         </div>
-
-
 
         <div className="space-y-6">
           <h1 className="text-3xl font-bold text-gray-800 dark:text-white">{item.name}</h1>
@@ -232,7 +238,7 @@ const ProductDetail = () => {
               />
             ) : (
               <button
-                onClick={() => toast.error("Please login to purchase.")}
+                onClick={() => navigate('/login')}
                 className="w-full py-2 bg-orange-600 text-white font-semibold rounded hover:bg-orange-700"
               >
                 Login to Purchase
@@ -247,7 +253,6 @@ const ProductDetail = () => {
         </div>
       </div>
 
-      {/* ✍️ Leave a Review */}
       {user && (
         <div className="mt-8">
           <h3 className="text-lg font-semibold mb-2">Write a Review</h3>
@@ -276,9 +281,8 @@ const ProductDetail = () => {
         </div>
       )}
 
-      {/* ⭐ Reviews */}
       <div className="mt-12 border-t pt-8 dark:border-gray-700">
-        <h2 className="text-xl font-bold mb-4">⭐ Customer Reviews</h2>
+        <h2 className="text-xl font-bold mb-4">Customer Reviews</h2>
 
         {loadingReviews ? (
           <p className="text-gray-400 dark:text-gray-500 italic">⏳ Loading reviews...</p>

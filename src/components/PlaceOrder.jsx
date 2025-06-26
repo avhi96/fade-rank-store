@@ -14,14 +14,17 @@ const PlaceOrder = ({ productId, productName, price }) => {
     if (!user) return toast.error("Please login first.");
 
     try {
-      await addDoc(collection(db, 'orders'), {
+      await addDoc(collection(db, 'productOrders'), {
         userId: user.uid,
+        userEmail: user.email,
+        userName: user.displayName || 'Anonymous',  // <-- Add this line
         productId,
         productName,
         price,
-        sendTo: recipientEmail || user.email,
-        createdAt: serverTimestamp()
+        status: 'pending',
+        createdAt: serverTimestamp(),
       });
+
 
       toast.success("Order placed successfully!");
       setShowBox(false);
@@ -30,6 +33,7 @@ const PlaceOrder = ({ productId, productName, price }) => {
       toast.error("Failed to place order.");
     }
   };
+
 
   return (
     <>

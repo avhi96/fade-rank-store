@@ -21,6 +21,7 @@ import Cart from './pages/CartPage';
 import MyOrders from './pages/MyOrders';
 import ProductDetails from './pages/ProductDetails';
 import EditProfile from './pages/EditProfile';
+import AllProducts from './pages/AllProducts';
 
 export default function App() {
   const { user } = useAuth();
@@ -61,6 +62,7 @@ export default function App() {
                 <Route path="/shop" element={<Shop />} />
                 <Route path="/products" element={<Products />} />
                 <Route path="/products/:id" element={<ProductDetails />} />
+                <Route path="/products/all" element={<AllProducts />} />
                 <Route path="/services" element={<Services />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/terms" element={<Terms />} />
