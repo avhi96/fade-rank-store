@@ -47,6 +47,7 @@ const AllShopProducts = () => {
                   )}
                   <img
                     src={product.image || '/placeholder.jpg'}
+
                     alt={product.name}
                     className="w-full h-52 object-cover transition-transform duration-300 group-hover:scale-105"
                   />
