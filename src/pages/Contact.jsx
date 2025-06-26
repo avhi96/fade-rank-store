@@ -75,7 +75,7 @@ const Contact = () => {
             <Feature
               icon={<FaTruck />}
               title="All Over India Dropshipping"
-              desc="Fast and secure digital delivery across India — no physical shipping needed."
+              desc="Fast and secure delivery across India."
             />
             <Feature
               icon={<FaMobileAlt />}
