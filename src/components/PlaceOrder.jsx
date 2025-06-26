@@ -81,7 +81,7 @@ const PlaceOrder = ({ productId, productName, price }) => {
       {confirmBox && (
         <div className="mt-4 p-4 bg-green-100 dark:bg-green-900 border border-green-400 dark:border-green-700 text-green-700 dark:text-green-300 rounded shadow max-w-md mx-auto text-center transition-colors">
           <p className="font-semibold">✅ Your order has been placed!</p>
-          <p className="text-sm mt-1">We will contact you soon for delivery.</p>
+          <p className="text-sm mt-1">Your order will be ready in 24hr.</p>
         </div>
       )}
     </>

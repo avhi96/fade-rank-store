@@ -191,10 +191,11 @@ const Services = () => {
             <div
               key={service.id}
               className={`relative flex flex-col justify-between rounded-xl p-6 shadow-lg min-h-[580px] transition ${index === 1
-                  ? 'hover:scale-[1.05] cursor-pointer border border-blue-500 dark:border-blue-400 hover:dark:border-purple-400 z-10'
+                  ? 'order-first md:order-none hover:scale-[1.05] cursor-pointer border border-blue-500 dark:border-blue-400 hover:dark:border-purple-400 z-10'
                   : 'hover:scale-[1.04] cursor-pointer hover:border hover:border-purple-500 dark:hover:border-purple-400'
                 } bg-gray-100 dark:bg-gray-800`}
             >
+
               {/* Icon with Recommended Tag */}
               <div className="relative flex justify-center mb-4">
                 {service.icon}

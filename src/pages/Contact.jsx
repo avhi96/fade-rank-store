@@ -74,13 +74,13 @@ const Contact = () => {
             <h1 className='text-xl font-semibold mb-4'>Why Choose Our Support?</h1>
             <Feature
               icon={<FaTruck />}
-              title="All Over India Dropshipping"
+              title="All Over India Shipping"
               desc="Fast and secure delivery across India."
             />
             <Feature
               icon={<FaMobileAlt />}
               title="100% Online Store"
-              desc="FadeMart runs fully online — shop anytime, from anywhere."
+              desc="Fade runs fully online — shop anytime, from anywhere."
             />
             <Feature
               icon={<FaHeadset />}
