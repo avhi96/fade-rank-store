@@ -153,7 +153,7 @@ const ItemDetails = ({ type = 'shopProducts' }) => {
         <div>
           <img src={activeImage} alt={item.name} className="w-full h-[400px] object-contain border rounded-lg bg-white dark:bg-gray-800" />
 
-          {/* Simple Carousel */}
+          {/* Carousel */}
           {(item.images?.length > 1) && (
             <div className="flex justify-between items-center mt-4">
               <button
@@ -167,11 +167,9 @@ const ItemDetails = ({ type = 'shopProducts' }) => {
               >
                 ◀ Prev
               </button>
-
               <span className="text-sm text-gray-600 dark:text-gray-400">
                 {item.images.indexOf(activeImage) + 1} / {item.images.length}
               </span>
-
               <button
                 onClick={() => {
                   const images = item.images;
@@ -194,8 +192,7 @@ const ItemDetails = ({ type = 'shopProducts' }) => {
             {[...Array(5)].map((_, i) => <FaStar key={i} />)}
             <span className="text-sm text-gray-600 dark:text-gray-400 ml-2">({item.reviews?.length || 0} reviews)</span>
           </div>
-          <p className="text-4xl font-semibold text-blue-600 dark:text-blue-400">₹{item.price}</p>
-          <p className="text-gray-700 dark:text-gray-300">{item.description}</p>
+          <p className="text-4xl font-semibold text-green-600 dark:text-green-400">₹{item.price}</p>
 
           <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg border dark:border-gray-700 text-sm">
             <p><strong>Delivery:</strong> Free - Est. 5–7 days</p>
@@ -217,6 +214,7 @@ const ItemDetails = ({ type = 'shopProducts' }) => {
             )}
           </div>
 
+
           <div className="flex gap-4 mt-4">
             <button onClick={handleToggleLike} className={`flex items-center gap-2 px-4 py-2 rounded-lg ${liked ? 'bg-pink-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white'}`}>
               <FaHeart /> {liked ? 'Liked' : 'Like'}
@@ -225,10 +223,14 @@ const ItemDetails = ({ type = 'shopProducts' }) => {
               <FaShareAlt /> Share
             </button>
           </div>
+          {/* ✅ Full Description Section */}
+          <div className="mt-6 text-sm sm:text-base leading-relaxed text-gray-700 dark:text-gray-300 whitespace-pre-line">
+            {item.fullDescription || item.description}
+          </div>
         </div>
       </div>
 
-      {/* Reviews Section */}
+      {/* Reviews */}
       <div className="mt-16">
         <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Customer Reviews</h2>
 

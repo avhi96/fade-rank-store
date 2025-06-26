@@ -42,7 +42,7 @@ export default function Home() {
         <div className="border border-purple-600 py-8 px-6 rounded-xl max-w-6xl mx-auto shadow-lg bg-gradient-to-br from-gray-100 to-white dark:from-gray-800 dark:to-gray-900 transition mb-24">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
             {[
-              { icon: '⚡', title: 'Fast Delivery', desc: 'Get your digital product within minutes.' },
+              { icon: '⚡', title: 'Fast Delivery', desc: 'Get your product within 7 days.' },
               { icon: '🛠️', title: 'Fully Customizable', desc: 'All projects tailored exactly to your needs.' },
               { icon: '💬', title: '24/7 Support', desc: 'We’re always here to help you.' },
             ].map((item, i) => (
@@ -63,7 +63,7 @@ export default function Home() {
           <h2 className="text-3xl font-bold text-center mb-10">How It Works</h2>
           <div className="grid md:grid-cols-3 gap-6 text-center">
             {[
-              { step: '1️⃣', title: 'Choose a Service', desc: 'Pick from Shop, Products, or Services tailored to your needs.' },
+              { step: '1️⃣', title: 'Choose a Service', desc: 'Pick from Shop or Products tailored to your needs.' },
               { step: '2️⃣', title: 'Place Order', desc: 'Quick checkout and instant confirmation.' },
               { step: '3️⃣', title: 'Delivery & Support', desc: 'Your product is delivered fast with full support.' },
             ].map((item, i) => (

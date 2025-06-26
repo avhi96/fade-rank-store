@@ -12,7 +12,7 @@ const Products = () => {
       try {
         const snapshot = await getDocs(collection(db, 'products'));
         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setProducts(data.slice(0, 6)); // 👈 show only first 6
+        setProducts(data.slice(0, 6)); // Show only first 6 products
       } catch (err) {
         console.error('Failed to fetch products:', err);
       }
@@ -39,18 +39,25 @@ const Products = () => {
                     <div className="absolute -inset-1 bg-blue-600 blur-lg opacity-0 group-hover:opacity-10 transition-all rounded-xl z-0" />
 
                     <img
-                      src={product.image || '/placeholder.jpg'}
+                      src={
+                        product.images?.[0] || // ✅ Check first image from array
+                        product.image ||       // ✅ Or single image field
+                        '/placeholder.jpg'     // ✅ Or fallback
+                      }
                       alt={product.name}
                       className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105 z-10"
+                      loading="lazy"
                     />
 
                     <div className="p-4 text-white flex flex-col flex-1 justify-between z-10 relative">
                       <div>
-                        <h2 className="text-lg font-semibold leading-tight text-gray-900 dark:text-white">
+                        <h2 className="text-lg font-semibold leading-tight text-gray-900 dark:text-white truncate">
                           {product.name}
                         </h2>
-                        <p className="text-blue-600 dark:text-blue-400 font-bold mt-3 text-base">
-                          ₹{product.price}
+                        <p className="text-green-600 dark:text-green-400 font-bold mt-3 text-base">
+                          ₹{product.discount > 0
+                            ? (product.price - (product.price * product.discount) / 100).toFixed(2)
+                            : product.price}
                         </p>
                       </div>
                       <span className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm text-center py-2 rounded-md">

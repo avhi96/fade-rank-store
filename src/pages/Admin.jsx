@@ -1,5 +1,3 @@
-// Admin.jsx
-
 import React, { useEffect, useState } from 'react';
 import {
   collection, getDocs, addDoc, deleteDoc, updateDoc,
@@ -14,7 +12,15 @@ const inputStyle = "w-full rounded border px-3 py-2 mb-2 bg-white dark:bg-gray-8
 const Admin = () => {
   const { user } = useAuth();
   const [tab, setTab] = useState('addProduct');
-  const [form, setForm] = useState({ name: '', description: '', price: '', discount: '', imageURL: '', type: 'shop' });
+  const [form, setForm] = useState({
+    name: '',
+    description: '',
+    price: '',
+    discount: '',
+    imageURL: '',
+    type: 'shop',
+    demoUrl: ''
+  });
   const [files, setFiles] = useState([]);
   const [editingId, setEditingId] = useState(null);
 
@@ -70,8 +76,11 @@ const Admin = () => {
       let uploaded = [];
       if (files.length > 0) {
         for (const file of files) uploaded.push(await uploadToCloudinary(file));
-      } else if (form.imageURL.trim()) uploaded = [form.imageURL.trim()];
-      else throw new Error("Image required");
+      } else if (form.imageURL.trim()) {
+        uploaded = [form.imageURL.trim()];
+      } else {
+        throw new Error("Image required");
+      }
 
       const data = {
         name: form.name,
@@ -79,6 +88,7 @@ const Admin = () => {
         discount: form.discount ? Number(form.discount) : 0,
         images: uploaded,
         description: form.description,
+        demoUrl: form.demoUrl || '',
         createdAt: serverTimestamp()
       };
 
@@ -93,7 +103,15 @@ const Admin = () => {
         toast.success('Product added');
       }
 
-      setForm({ name: '', description: '', price: '', discount: '', imageURL: '', type: 'shop' });
+      setForm({
+        name: '',
+        description: '',
+        price: '',
+        discount: '',
+        imageURL: '',
+        type: 'shop',
+        demoUrl: ''
+      });
       setFiles([]);
       fetchAll();
     } catch (err) {
@@ -110,7 +128,8 @@ const Admin = () => {
       price: item.price || '',
       discount: item.discount || '',
       imageURL: item.images?.[0] || item.image || '',
-      type
+      type,
+      demoUrl: item.demoUrl || ''
     });
     setEditingId(item.id);
     window.scrollTo(0, 0);
@@ -159,9 +178,12 @@ const Admin = () => {
             <option value="digital">Digital Product</option>
           </select>
           <input type="text" placeholder="Product Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className={inputStyle} required />
-          <textarea placeholder="Description" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className={inputStyle} />
+          <textarea placeholder="Description" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className={`${inputStyle} h-32`} />
           <input type="number" placeholder="Price" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} className={inputStyle} required />
           <input type="number" placeholder="% Off (Optional)" value={form.discount} onChange={e => setForm({ ...form, discount: e.target.value })} className={inputStyle} />
+          {form.type === 'digital' && (
+            <input type="url" placeholder="Demo Link (Optional)" value={form.demoUrl} onChange={e => setForm({ ...form, demoUrl: e.target.value })} className={inputStyle} />
+          )}
           <input type="file" accept="image/*" multiple onChange={e => setFiles(Array.from(e.target.files))} className="text-sm" />
           <input type="url" placeholder="Image URL (optional)" value={form.imageURL} onChange={e => setForm({ ...form, imageURL: e.target.value })} className={inputStyle} />
           <button type="submit" disabled={uploading} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">
@@ -195,28 +217,15 @@ const Admin = () => {
                 </ul>
               </div>
               <div className="mt-3 flex gap-2">
-                <button
-                  onClick={() => handleComplete(order.userId, order.id)}
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white py-1 px-3 rounded"
-                >
-                  Complete
-                </button>
-                <button
-                  onClick={() => handleDelete(`users/${order.userId}/orders`, order.id)}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white py-1 px-3 rounded"
-                >
-                  Delete
-                </button>
+                <button onClick={() => handleComplete(order.userId, order.id)} className="flex-1 bg-green-600 hover:bg-green-700 text-white py-1 px-3 rounded">Complete</button>
+                <button onClick={() => handleDelete(`users/${order.userId}/orders`, order.id)} className="flex-1 bg-red-600 hover:bg-red-700 text-white py-1 px-3 rounded">Delete</button>
               </div>
             </div>
           ))}
         </div>
       )}
 
-
-
       {tab === 'digitalOrders' && <OrderGrid orders={digitalOrders} type="productOrders" onDelete={handleDelete} onComplete={handleComplete} />}
-
       {tab === 'serviceOrders' && <OrderGrid orders={serviceOrders} type="orders" onDelete={handleDelete} onComplete={handleComplete} />}
     </div>
   );

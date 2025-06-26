@@ -72,6 +72,10 @@ const ProductDetail = () => {
 
   const handleAddToCart = () => {
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    if (cart.some(p => p.id === id)) {
+      toast.error("Already in cart");
+      return;
+    }
     cart.push({ ...item, id });
     localStorage.setItem('cart', JSON.stringify(cart));
     setInCart(true);
@@ -110,10 +114,8 @@ const ProductDetail = () => {
     setReviewText('');
     setRating(0);
 
-    setLoadingReviews(true);
     const snap = await getDocs(ref);
     setReviews(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    setLoadingReviews(false);
   };
 
   const handleDeleteReview = async (reviewId) => {
@@ -127,7 +129,7 @@ const ProductDetail = () => {
       title: item?.name,
       text: item?.description,
       url: window.location.href
-    });
+    }) || toast.error("Sharing not supported");
   };
 
   if (!item) {
@@ -139,25 +141,19 @@ const ProductDetail = () => {
   }
 
   return (
-    <div className="min-h-screen px-4 sm:px-6 lg:px-8 py-8 max-w-screen-xl mx-auto dark:bg-gray-900 dark:text-white">
+    <div className="min-h-screen px-4 py-10 max-w-screen-xl mx-auto dark:bg-gray-900 dark:text-white">
       <div className="grid md:grid-cols-2 gap-10">
-        <div className="w-full max-w-full">
-          {item.images?.length > 0 ? (
+        {/* Product Image Section */}
+        <div className="w-full">
+          {item.images?.length > 1 ? (
             <Carousel
               showArrows
-              autoPlay
+              autoPlay={item.images.length > 2}
               infiniteLoop
               showThumbs={false}
               emulateTouch
               className="rounded shadow"
             >
-              <div>
-                <img
-                  src={item.image}
-                  alt="Main"
-                  className="object-contain max-h-[400px] w-full mx-auto"
-                />
-              </div>
               {item.images.map((url, i) => (
                 <div key={i}>
                   <img
@@ -170,30 +166,44 @@ const ProductDetail = () => {
             </Carousel>
           ) : (
             <img
-              src={item.image}
-              alt="Main"
-              className="object-contain max-h-[350px] w-full mx-auto rounded shadow"
+              src={item.images?.[0] || item.image || '/placeholder.jpg'}
+              alt="Product"
+              className="object-contain max-h-[400px] w-full mx-auto rounded shadow"
             />
           )}
         </div>
 
+        {/* Product Info Section */}
         <div className="space-y-6">
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-white">{item.name}</h1>
+          <h1 className="text-3xl font-bold">{item.name}</h1>
 
           <div className="flex items-center gap-3">
-            <p className="text-3xl font-extrabold text-blue-700 dark:text-blue-400">₹{item.price}</p>
-            {item.discount && (
-              <span className="bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 px-3 py-1 rounded text-sm font-semibold">
-                {item.discount}% OFF
-              </span>
-            )}
-            {item.quantity === 0 && (
-              <span className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300 px-3 py-1 rounded text-sm font-semibold">
-                Out of Stock
-              </span>
+            {item.discount > 0 ? (
+              <>
+                <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                  ₹{(item.price - (item.price * item.discount) / 100).toFixed(2)}
+                </p>
+                <p className="line-through text-gray-500 dark:text-gray-400 text-xl">
+                  ₹{item.price}
+                </p>
+                <span className="bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 px-3 py-1 rounded text-sm font-semibold">
+                  {item.discount}% OFF
+                </span>
+              </>
+            ) : (
+              <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                ₹{item.price}
+              </p>
             )}
           </div>
 
+          {item.quantity === 0 && (
+            <span className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300 px-3 py-1 rounded text-sm font-semibold">
+              Out of Stock
+            </span>
+          )}
+
+          {/* Actions */}
           <div className="flex flex-wrap gap-3 sm:gap-4">
             <button
               onClick={handleLike}
@@ -228,6 +238,7 @@ const ProductDetail = () => {
             )}
           </div>
 
+          {/* Order Section */}
           <div className="mt-4">
             {user ? (
               <PlaceOrder
@@ -246,13 +257,29 @@ const ProductDetail = () => {
             )}
           </div>
 
+          {/* Description */}
           <div className="pt-6 border-t dark:border-gray-700 mt-6">
             <h2 className="text-lg font-semibold mb-2">Product Description</h2>
             <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{item.description}</p>
           </div>
+          <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg border dark:border-gray-700 text-sm">
+            <h5 className='text-green-600 font-bold'>License Agreement:</h5>
+            <p><br />You may modify the source code for personal or internal use.<br />
+              <br />
+              You may use the bot on any server that you own or manage.<br></br>
+              <br />
+              You may not remove or alter the protected licensing system.<br></br>
+              <br />
+              You may not share, resell, or distribute the bot or its source code.<br></br>
+              <br />
+              You may not use the bot for illegal, harmful, or malicious purposes.<br></br>
+              <br />
+              A separate commercial-use license is required for public resale, mass deployment, or paid hosting use.</p>
+          </div>
         </div>
       </div>
 
+      {/* Reviews */}
       {user && (
         <div className="mt-8">
           <h3 className="text-lg font-semibold mb-2">Write a Review</h3>
