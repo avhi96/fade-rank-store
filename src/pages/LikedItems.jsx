@@ -18,7 +18,16 @@ const LikedItems = () => {
       try {
         const ref = collection(db, 'users', user.uid, 'likedItems');
         const snap = await getDocs(ref);
-        const items = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const items = snap.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            name: data.name,
+            price: data.price,
+            type: data.type || 'shopProducts',
+            image: data.image ?? '', // let logic below decide if fallback is needed
+          };
+        });
         setLikedItems(items);
       } catch (err) {
         console.error('Error fetching liked items:', err);
@@ -39,6 +48,11 @@ const LikedItems = () => {
     }
   };
 
+  const handleImageError = (e) => {
+    e.currentTarget.src = '/placeholder.jpg';
+    e.currentTarget.onerror = null;
+  };
+
   if (!user) {
     return <p className="text-center mt-20 text-gray-600 dark:text-gray-300">Please login to see liked items.</p>;
   }
@@ -56,20 +70,27 @@ const LikedItems = () => {
               key={item.id}
               className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700 transition hover:shadow-md"
             >
-              <img
-                src={item.image}
-                alt={item.name}
-                className="w-full h-48 object-contain rounded cursor-pointer hover:opacity-90 transition"
-                onClick={() => navigate(`/${item.type || 'products'}/${item.id}`)}
-              />
-              <h3 className="mt-2 font-semibold text-gray-800 dark:text-white truncate">
-                {item.name}
-              </h3>
-              <p className="text-blue-600 dark:text-blue-400 font-bold text-lg">₹{item.price}</p>
+              <div
+                onClick={() => navigate(`/${item.type}/${item.id}`)}
+                className="cursor-pointer"
+              >
+                <img
+                  src={item.image || '/placeholder.jpg'}
+                  onError={handleImageError}
+                  alt={item.name || 'Item'}
+                  className="w-full h-48 object-cover rounded hover:opacity-90 transition"
+                />
+                <h3 className="mt-2 font-semibold text-center text-gray-800 dark:text-white truncate">
+                  {item.name}
+                </h3>
+                <p className="text-center text-blue-600 dark:text-blue-400 font-bold text-lg">
+                  ₹{item.price}
+                </p>
+              </div>
 
-              <div className="flex justify-between mt-3">
+              <div className="flex justify-between mt-4">
                 <button
-                  onClick={() => navigate(`/${item.type || 'products'}/${item.id}`)}
+                  onClick={() => navigate(`/${item.type}/${item.id}`)}
                   className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
                 >
                   View Details

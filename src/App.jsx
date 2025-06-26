@@ -6,6 +6,8 @@ import Sidebar from './components/Sidebar';
 import LoadingScreen from './components/LoadingScreen';
 import Home from './pages/Home';
 import Shop from './pages/Shop';
+import AllShopProducts from './pages/AllShopProducts';
+import ItemDetails from './pages/ItemDetail';
 import Products from './pages/Products';
 import Services from './pages/Services';
 import Contact from './pages/Contact';
@@ -60,6 +62,8 @@ export default function App() {
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/" element={<Home />} />
                 <Route path="/shop" element={<Shop />} />
+                <Route path="/shop/all" element={<AllShopProducts />} />
+                <Route path="/item/:id" element={<ItemDetails />} />
                 <Route path="/products" element={<Products />} />
                 <Route path="/products/:id" element={<ProductDetails />} />
                 <Route path="/products/all" element={<AllProducts />} />
