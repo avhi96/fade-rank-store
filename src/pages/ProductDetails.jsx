@@ -203,6 +203,9 @@ const ProductDetail = () => {
             </span>
           )}
 
+
+
+
           {/* Actions */}
           <div className="flex flex-wrap gap-3 sm:gap-4">
             <button
@@ -210,47 +213,57 @@ const ProductDetail = () => {
               className={`flex items-center gap-2 px-4 py-2 rounded ${liked
                 ? 'bg-pink-600 text-white'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white'} hover:opacity-90`}
-            >
+                >
               <FaHeart /> {liked ? 'Liked' : 'Like'}
             </button>
 
             <button
               onClick={handleShare}
               className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-            >
+              >
               <FaShareAlt /> Share
             </button>
 
             {inCart ? (
               <button
-                onClick={() => navigate('/cart')}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-800 text-white rounded hover:bg-blue-900"
+              onClick={() => navigate('/cart')}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-800 text-white rounded hover:bg-blue-900"
               >
                 <FaShoppingCart /> Go to Cart
               </button>
             ) : (
               <button
-                onClick={handleAddToCart}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              onClick={handleAddToCart}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
               >
                 <FaShoppingCart /> Add to Cart
               </button>
             )}
           </div>
+            {item.demoUrl && (
+              <a
+                href={item.demoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block mt-2 bg-green-600 dark:bg-green-600 text-gray-900 dark:text-white text-sm px-4 py-2 rounded hover:bg-green-700 dark:hover:bg-green-700 transition"
+              >
+                 View Demo
+              </a>
+            )}
 
           {/* Order Section */}
           <div className="mt-4">
             {user ? (
               <PlaceOrder
-                productId={id}
-                productName={item.name}
-                price={item.price}
-                type="buy"
+              productId={id}
+              productName={item.name}
+              price={item.price}
+              type="buy"
               />
             ) : (
               <button
-                onClick={() => navigate('/login')}
-                className="w-full py-2 bg-orange-600 text-white font-semibold rounded hover:bg-orange-700"
+              onClick={() => navigate('/login')}
+              className="w-full py-2 bg-orange-600 text-white font-semibold rounded hover:bg-orange-700"
               >
                 Login to Purchase
               </button>

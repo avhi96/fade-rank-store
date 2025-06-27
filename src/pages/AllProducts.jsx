@@ -58,7 +58,7 @@ const AllProducts = () => {
                       </p>
                     </div>
                     <span className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm text-center py-2 rounded-md">
-                      Purchase Now
+                      View Details
                     </span>
                   </div>
                 </div>

@@ -18,8 +18,8 @@ const Terms = () => {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-5 py-2 rounded-lg font-semibold transition ${activeTab === tab
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700'
                 }`}
             >
               {tab === 'terms' && 'Terms of Service'}
@@ -41,7 +41,7 @@ const Terms = () => {
             </div>
             <div>
               <h3 className="font-bold">2. Services Offered</h3>
-              <p>We provide physical products.</p>
+              <p>We provide physical products. All orders will be delivered within 3-4 working days</p>
             </div>
             <div>
               <h3 className="font-bold">3. Account Responsibility</h3>
@@ -185,7 +185,7 @@ const Terms = () => {
 
             <div>
               <h3 className="font-bold">1. Physical Products</h3>
-              <p>Refunds or replacements are only issued for damaged or incorrect items reported within days. Return shipping may be required.</p>
+              <p>If you receive a damaged or defective product, please contact us within 24 hours.We have 7 days refund policy We will arrange a re-delivery, exchange, or replacement within 5–7 working days.</p>
             </div>
             <div>
               <h3 className="font-bold">2. Products</h3>
@@ -197,7 +197,8 @@ const Terms = () => {
             </div>
             <div>
               <h3 className="font-bold">5. Request a Refund</h3>
-              <p>Email <a href="mailto:support@fade013.store" className="text-blue-600 dark:text-blue-400">support@fade013.store</a> with your order number, proof of payment, and issue description.</p>
+              <p>Email <a href="mailto:support@fade013.store" className="text-blue-600 dark:text-blue-400">support@fade013.store</a> with your order number, proof of payment, and a description of the issue. Once your refund is approved, the amount will be credited to your bank account within 5–7 working days.
+              </p>
             </div>
 
             <p className="text-sm text-gray-400 dark:text-gray-500 text-right mt-8">Last updated: June 26, 2025</p>
