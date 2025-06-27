@@ -41,38 +41,43 @@ const Terms = () => {
             </div>
             <div>
               <h3 className="font-bold">2. Services Offered</h3>
-              <p>We provide physical products. All orders will be delivered within 3-4 working days</p>
+              <p>We provide physical products.</p>
             </div>
             <div>
-              <h3 className="font-bold">3. Account Responsibility</h3>
+              <h3 className="font-bold">3. Shipping Policy</h3>
+              <p>All orders will be delivered within 3-4 working days</p>
+            </div>
+
+            <div>
+              <h3 className="font-bold">4. Account Responsibility</h3>
               <p>You're responsible for maintaining your account credentials.</p>
             </div>
             <div>
-              <h3 className="font-bold">4. Orders and Payments</h3>
+              <h3 className="font-bold">5. Orders and Payments</h3>
               <p>Prices are in INR. Payments are handled by Razorpay, PayPal, or Stripe. Orders are processed after payment.</p>
             </div>
             <div>
-              <h3 className="font-bold">5. Shipping & Delivery</h3>
+              <h3 className="font-bold">6. Shipping & Delivery</h3>
               <p>Physical items are shipped to the address provided.</p>
             </div>
             <div>
-              <h3 className="font-bold">6. Acceptable Use</h3>
+              <h3 className="font-bold">7. Acceptable Use</h3>
               <p>No illegal activities, DDoS tools, or pirated content allowed. Violators may be suspended without refund.</p>
             </div>
             <div>
-              <h3 className="font-bold">7. Intellectual Property</h3>
+              <h3 className="font-bold">8. Intellectual Property</h3>
               <p>All content is owned by Fade or its licensors and may not be reused.</p>
             </div>
             <div>
-              <h3 className="font-bold">8. Liability Disclaimer</h3>
+              <h3 className="font-bold">9. Liability Disclaimer</h3>
               <p>Services are provided “as is”. We are not responsible for indirect damages, data loss, or downtime.</p>
             </div>
             <div>
-              <h3 className="font-bold">9. Termination</h3>
+              <h3 className="font-bold">10. Termination</h3>
               <p>We may terminate access if terms are violated.</p>
             </div>
             <div>
-              <h3 className="font-bold">10. Governing Law</h3>
+              <h3 className="font-bold">11. Governing Law</h3>
               <p>These terms are governed by the laws of Punjab, India. Disputes will be handled in courts of Sangrur, Punjab.</p>
             </div>
 

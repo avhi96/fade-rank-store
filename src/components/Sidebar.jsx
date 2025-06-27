@@ -15,7 +15,7 @@ const Sidebar = () => {
   const links = [
     { name: "Home", icon: <FaHome />, to: "/" },
     { name: "Shop", icon: <FaShoppingCart />, to: "/shop" },
-    { name: "Products", icon: <FaBoxOpen />, to: "/products" },
+    // { name: "Products", icon: <FaBoxOpen />, to: "/products" },
     // { name: "Services", icon: <FaTags />, to: "/services" },
     { name: "Contact", icon: <FaPhone />, to: "/contact" },
     { name: "Terms", icon: <FaFileContract />, to: "/terms" },
