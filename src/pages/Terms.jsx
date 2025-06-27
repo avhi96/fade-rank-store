@@ -184,19 +184,20 @@ const Terms = () => {
             <p><strong>Effective Date:</strong> June 26, 2025</p>
 
             <div>
-              <h3 className="font-bold">1. Physical Products</h3>
-              <p>If you receive a damaged or defective product, please contact us within 24 hours.We have 7 days refund policy We will arrange a re-delivery, exchange, or replacement within 5–7 working days.</p>
+              <h3 className="font-bold">1. Products</h3>
+              <p>If you receive any damaged or defective product, please contact us within 24 hours. We will arrange a replacement or exchange and re-deliver it within 5–7 working days.
+                We have 7 days Return policy.</p>
             </div>
-            <div>
+            {/* <div>
               <h3 className="font-bold">2. Products</h3>
               <p>Due to the digital nature of the product and instant access to the source code, all sales are final and non-refundable once the bot or license key has been delivered or accessed.</p>
-            </div>
+            </div> */}
             <div>
-              <h3 className="font-bold">4. Duplicate Transactions</h3>
+              <h3 className="font-bold">2. Duplicate Transactions</h3>
               <p>We will fully refund accidental duplicate payments within 3–7 business days.</p>
             </div>
             <div>
-              <h3 className="font-bold">5. Request a Refund</h3>
+              <h3 className="font-bold">3. Request a Refund</h3>
               <p>Email <a href="mailto:support@fade013.store" className="text-blue-600 dark:text-blue-400">support@fade013.store</a> with your order number, proof of payment, and a description of the issue. Once your refund is approved, the amount will be credited to your bank account within 5–7 working days.
               </p>
             </div>
