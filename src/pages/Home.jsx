@@ -16,7 +16,7 @@ export default function Home() {
           </h1>
 
           <p className="text-lg sm:text-xl lg:text-2xl max-w-2xl mx-auto mb-10 text-gray-600 dark:text-gray-300">
-            Your one-stop digital marketplace for custom bots, online tools, and unique digital products.
+            Turning Your Anime Passion Into Everyday Style<br/> One Iconic Piece at a Time.
           </p>
 
           <div className="flex gap-4 flex-wrap justify-center">
