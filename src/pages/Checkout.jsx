@@ -21,15 +21,15 @@ const Checkout = () => {
     pincode: ''
   });
 
-useEffect(() => {
-  const buyNowItem = JSON.parse(localStorage.getItem('buyNowItem'));
-  if (buyNowItem) {
-    setCart([buyNowItem]);
-  } else {
-    const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
-    setCart(localCart);
-  }
-}, []);
+  useEffect(() => {
+    const buyNowItem = JSON.parse(localStorage.getItem('buyNowItem'));
+    if (buyNowItem) {
+      setCart([buyNowItem]);
+    } else {
+      const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
+      setCart(localCart);
+    }
+  }, []);
 
   useEffect(() => {
     if (user) fetchAddresses();
@@ -65,8 +65,14 @@ useEffect(() => {
     }
   };
 
+  const getFinalPrice = (price, discount) => {
+    return discount && discount > 0
+      ? price - price * (discount / 100)
+      : price;
+  };
+
   const selectedAddress = addresses.find(addr => addr.id === selectedAddressId);
-  const total = cart.reduce((acc, item) => acc + item.price, 0);
+  const total = cart.reduce((acc, item) => acc + getFinalPrice(item.price, item.discount), 0);
 
   const handleProceed = () => {
     if (!selectedAddressId) return toast.error("Please select a delivery address");
@@ -149,16 +155,27 @@ useEffect(() => {
         {/* Cart Summary */}
         <div className="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow">
           <h2 className="text-xl font-semibold mb-4">🧾 Order Summary</h2>
-          {cart.map((item, i) => (
-            <div key={i} className="mb-3 border-b pb-2 border-gray-300 dark:border-gray-600">
-              <p className="font-medium">{item.name}</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">₹{item.price}</p>
-            </div>
-          ))}
+          {cart.map((item, i) => {
+            const finalPrice = getFinalPrice(item.price, item.discount);
+            return (
+              <div key={i} className="mb-3 border-b pb-2 border-gray-300 dark:border-gray-600">
+                <p className="font-medium">{item.name}</p>
+                {item.discount > 0 ? (
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <span className="line-through mr-2">₹{item.price}</span>
+                    <span className="text-green-600 dark:text-green-400 font-semibold">₹{finalPrice.toFixed(0)}</span>
+                    <span className="ml-1 text-xs text-red-500">({item.discount}% OFF)</span>
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-600 dark:text-gray-400">₹{item.price}</p>
+                )}
+              </div>
+            );
+          })}
           <hr className="my-4" />
           <div className="flex justify-between font-bold">
             <span>Total</span>
-            <span>₹{total}</span>
+            <span>₹{total.toFixed(0)}</span>
           </div>
           <button
             onClick={handleProceed}

@@ -4,12 +4,12 @@ import { db } from '../firebase';
 import { collection, getDocs } from 'firebase/firestore';
 
 const categoryNames = {
-  keychains: 'Anime Keychains',
-  posters: 'Wall Posters',
-  wallpapers: 'Anime Wallpapers',
+  accessories: 'Anime Accessories',
+  'wall-decor': 'Wall Decor',
+  'tech-gear': 'Desk & Tech Gear',
   figurines: 'Anime Figurines',
   stickers: 'Stickers & Decals',
-  cosplay: 'Cosplay Items',
+  cosplay: 'Costumes & Wearables',
 };
 
 const CategoryPage = () => {
@@ -39,7 +39,7 @@ const CategoryPage = () => {
     <div className="min-h-screen py-12 px-4 bg-white dark:bg-gray-900">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-4xl font-bold text-center mb-10 text-gray-900 dark:text-white">
-          🗂 {categoryTitle}
+           {categoryTitle}
         </h1>
 
         {loading ? (

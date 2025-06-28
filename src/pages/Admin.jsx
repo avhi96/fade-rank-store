@@ -10,12 +10,12 @@ import { toast } from 'react-hot-toast';
 const inputStyle = "w-full rounded border px-3 py-2 mb-2 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-black dark:text-white placeholder-gray-400";
 
 const shopCategories = [
-  { label: 'Anime Keychains', value: 'keychains' },
-  { label: 'Wall Posters', value: 'posters' },
-  { label: 'Anime Wallpapers', value: 'wallpapers' },
+  { label: 'Anime Accessories', value: 'accessories' },
+  { label: 'Wall Decor', value: 'wall-decor' },
+  { label: 'Desk & Tech Gear', value: 'tech-gear' },
   { label: 'Anime Figurines', value: 'figurines' },
   { label: 'Stickers & Decals', value: 'stickers' },
-  { label: 'Cosplay Items', value: 'cosplay' },
+  { label: 'Costumes & Wearables', value: 'cosplay' },
 ];
 
 const Admin = () => {
@@ -233,14 +233,38 @@ const Admin = () => {
               <div className="space-y-1 text-sm">
                 <p><strong>Order ID:</strong> {order.id}</p>
                 <p><strong>User Name:</strong> {order.username || 'Unknown'}</p>
-                <p><strong>Total:</strong> ₹{order.items?.reduce((sum, item) => sum + (item.price || 0), 0)}</p>
+                <p><strong>Total:</strong> ₹{order.items?.reduce((sum, item) => {
+                  const original = item.price || 0;
+                  const discount = item.discount || 0;
+                  const final = discount > 0 ? original - (original * discount / 100) : original;
+                  return sum + final;
+                }, 0).toFixed(0)}</p>
+
                 <p><strong>Status:</strong> <span className={`font-semibold ${order.status === 'completed' ? 'text-green-600' : 'text-yellow-600'}`}>{order.status || 'pending'}</span></p>
                 <p><strong>Items:</strong></p>
                 <ul className="list-disc list-inside text-gray-600 dark:text-gray-300">
-                  {order.items?.map((item, idx) => (
-                    <li key={idx}>{item.name} - ₹{item.price}</li>
-                  ))}
+                  {order.items?.map((item, idx) => {
+                    const original = item.price || 0;
+                    const discount = item.discount || 0;
+                    const final = discount > 0 ? original - (original * discount / 100) : original;
+
+                    return (
+                      <li key={idx}>
+                        {item.name} - ₹
+                        {discount > 0 ? (
+                          <>
+                            <span className="line-through text-gray-400 mr-1">{original}</span>
+                            <span className="text-green-600">{final.toFixed(0)}</span>
+                            <span className="text-xs text-red-500 ml-1">({discount}% OFF)</span>
+                          </>
+                        ) : (
+                          <span>{original}</span>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
+
               </div>
               <div className="mt-3 flex gap-2">
                 <button onClick={() => handleComplete(order.userId, order.id)} className="flex-1 bg-green-600 hover:bg-green-700 text-white py-1 px-3 rounded">Complete</button>

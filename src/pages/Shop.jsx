@@ -3,12 +3,36 @@ import { Link } from 'react-router-dom';
 import { FaShoppingCart } from 'react-icons/fa';
 
 const categories = [
-  { name: 'Anime Keychains', slug: 'keychains', image: '/public/images/keychain.jpg' },
-  { name: 'Wall Posters', slug: 'posters', image: '/public/images/wallpaper.jpg' },
-  { name: 'Anime Wallpapers', slug: 'wallpapers', image: '/public/images/banner.jpeg' },
-  { name: 'Anime Figurines', slug: 'figurines', image: '/public/images/feagure.jpg' },
-  { name: 'Stickers & Decals', slug: 'stickers', image: '/public/images/stickers.jpg' },
-  { name: 'Cosplay Items', slug: 'cosplay', image: '/public/images/cosplay.jpg' },
+  {
+    name: 'Anime Accessories',
+    slug: 'accessories',
+    image: '/public/images/keychain.jpg',
+  },
+  {
+    name: 'Wall Decor',
+    slug: 'wall-decor',
+    image: '/public/images/wallpaper.jpg',
+  },
+  {
+    name: 'Desk & Tech Gear',
+    slug: 'tech-gear',
+    image: '/public/images/mousepad.jpg',
+  },
+  {
+    name: 'Anime Figurines',
+    slug: 'figurines',
+    image: '/public/images/feagure.jpg',
+  },
+  {
+    name: 'Stickers & Decals',
+    slug: 'stickers',
+    image: '/public/images/stickers.jpg',
+  },
+  {
+    name: 'Costumes & Wearables',
+    slug: 'cosplay',
+    image: '/public/images/cosplay.jpg',
+  },
 ];
 
 const Shop = () => {
@@ -28,11 +52,15 @@ const Shop = () => {
           Categories
         </h1>
 
-        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
+        <div className="grid gap-8 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
           {categories.map(cat => (
             <Link to={`/shop/${cat.slug}`} key={cat.slug}>
               <div className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl shadow hover:shadow-xl transition-all overflow-hidden group">
-                <img src={cat.image} alt={cat.name} className="h-48 w-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                <img
+                  src={cat.image}
+                  alt={cat.name}
+                  className="h-48 w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
                 <div className="p-4 text-center text-gray-900 dark:text-white">
                   <h2 className="text-xl font-semibold">{cat.name}</h2>
                 </div>
@@ -41,17 +69,17 @@ const Shop = () => {
           ))}
         </div>
 
-      {/* Show More Button */}
-      <div className="text-center mt-12">
-        <Link
-          to="/shop/all"
-          className="inline-block bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 transition"
-        >
-          View All Products
-        </Link>
+        {/* Show More Button */}
+        <div className="text-center mt-12">
+          <Link
+            to="/shop/all"
+            className="inline-block bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 transition"
+          >
+            View All Products
+          </Link>
+        </div>
       </div>
     </div>
-    </div >
   );
 };
 
