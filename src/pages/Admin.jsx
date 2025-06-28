@@ -9,6 +9,15 @@ import { toast } from 'react-hot-toast';
 
 const inputStyle = "w-full rounded border px-3 py-2 mb-2 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-black dark:text-white placeholder-gray-400";
 
+const shopCategories = [
+  { label: 'Anime Keychains', value: 'keychains' },
+  { label: 'Wall Posters', value: 'posters' },
+  { label: 'Anime Wallpapers', value: 'wallpapers' },
+  { label: 'Anime Figurines', value: 'figurines' },
+  { label: 'Stickers & Decals', value: 'stickers' },
+  { label: 'Cosplay Items', value: 'cosplay' },
+];
+
 const Admin = () => {
   const { user } = useAuth();
   const [tab, setTab] = useState('addProduct');
@@ -19,7 +28,8 @@ const Admin = () => {
     discount: '',
     imageURL: '',
     type: 'shop',
-    demoUrl: ''
+    demoUrl: '',
+    category: '',
   });
   const [files, setFiles] = useState([]);
   const [editingId, setEditingId] = useState(null);
@@ -89,10 +99,14 @@ const Admin = () => {
         images: uploaded,
         description: form.description,
         demoUrl: form.demoUrl || '',
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
       };
 
       const target = form.type === 'shop' ? 'shopProducts' : 'products';
+
+      if (form.type === 'shop') {
+        data.category = form.category || '';
+      }
 
       if (editingId) {
         await updateDoc(doc(db, target, editingId), data);
@@ -110,7 +124,8 @@ const Admin = () => {
         discount: '',
         imageURL: '',
         type: 'shop',
-        demoUrl: ''
+        demoUrl: '',
+        category: '',
       });
       setFiles([]);
       fetchAll();
@@ -129,7 +144,8 @@ const Admin = () => {
       discount: item.discount || '',
       imageURL: item.images?.[0] || item.image || '',
       type,
-      demoUrl: item.demoUrl || ''
+      demoUrl: item.demoUrl || '',
+      category: item.category || '',
     });
     setEditingId(item.id);
     window.scrollTo(0, 0);
@@ -177,6 +193,16 @@ const Admin = () => {
             <option value="shop">Shop Product</option>
             <option value="digital">Digital Product</option>
           </select>
+
+          {form.type === 'shop' && (
+            <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} className={inputStyle} required>
+              <option value="">-- Select Category --</option>
+              {shopCategories.map(cat => (
+                <option key={cat.value} value={cat.value}>{cat.label}</option>
+              ))}
+            </select>
+          )}
+
           <input type="text" placeholder="Product Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className={inputStyle} required />
           <textarea placeholder="Description" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className={`${inputStyle} h-32`} />
           <input type="number" placeholder="Price" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} className={inputStyle} required />
@@ -239,6 +265,7 @@ const ProductGrid = ({ data, type, onDelete, onEdit }) => (
         <h3 className="text-lg font-bold">{item.name}</h3>
         <p className="text-sm text-gray-500 dark:text-gray-300 mb-1">₹{item.price}</p>
         {item.discount > 0 && <p className="text-xs text-red-500">{item.discount}% OFF</p>}
+        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Category: {item.category || 'N/A'}</p>
         <div className="mt-3 flex gap-2">
           <button onClick={() => onEdit(item)} className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded">Edit</button>
           <button onClick={() => onDelete(type, item.id)} className="flex-1 bg-red-600 hover:bg-red-700 text-white py-1 px-3 rounded">Delete</button>

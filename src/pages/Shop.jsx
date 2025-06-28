@@ -1,81 +1,57 @@
-import React, { useEffect, useState } from 'react';
-import { db } from '../firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import React from 'react';
 import { Link } from 'react-router-dom';
+import { FaShoppingCart } from 'react-icons/fa';
+
+const categories = [
+  { name: 'Anime Keychains', slug: 'keychains', image: '/public/images/keychain.jpg' },
+  { name: 'Wall Posters', slug: 'posters', image: '/public/images/banner.jpeg' },
+  { name: 'Anime Wallpapers', slug: 'wallpapers', image: '/images/wallpapers.jpg' },
+  { name: 'Anime Figurines', slug: 'figurines', image: '/public/images/feagure.jpg' },
+  { name: 'Stickers & Decals', slug: 'stickers', image: '/images/stickers.jpg' },
+  { name: 'Cosplay Items', slug: 'cosplay', image: '/images/cosplay.jpg' },
+];
 
 const Shop = () => {
-  const [products, setProducts] = useState([]);
-
-  useEffect(() => {
-    const fetchTopProducts = async () => {
-      try {
-        const snapshot = await getDocs(collection(db, 'shopProducts'));
-        const topProducts = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        })).slice(0, 9); // only top 9
-        setProducts(topProducts);
-      } catch (err) {
-        console.error('Failed to fetch products:', err);
-      }
-    };
-
-    fetchTopProducts();
-  }, []);
-
   return (
-    <div className="min-h-screen py-12 px-4 bg-gray-100 dark:bg-gray-900">
+    <div className="relative min-h-screen py-12 px-4 bg-white dark:bg-gray-900">
+      {/* 🛒 Cart Button */}
+      <Link
+        to="/cart"
+        className="fixed top-6 right-6 z-50 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg transition"
+        title="View Cart"
+      >
+        <FaShoppingCart size={20} />
+      </Link>
+
       <div className="max-w-7xl mx-auto">
         <h1 className="text-4xl font-bold text-center mb-12 text-gray-900 dark:text-white">
-          🛍️ Top Products
+          Categories
         </h1>
 
-        {products.length === 0 ? (
-          <p className="text-center text-gray-500 dark:text-gray-400">No products available.</p>
-        ) : (
-          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-            {products.map(product => (
-              <Link
-                to={`/item/${product.id}`}
-                key={product.id}
-              >
-                <div className="bg-white dark:bg-[#0f172a] rounded-xl shadow-md hover:shadow-xl transition-all border border-gray-300 dark:border-gray-700 overflow-hidden group relative">
-                  <img
-                    src={product.image || '/placeholder.jpg'}
-                    alt={product.name}
-                    className="w-full h-52 object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-
-                  <div className="p-4 flex flex-col justify-between text-gray-900 dark:text-white">
-                    <div>
-                      <h3 className="text-lg font-semibold">{product.name}</h3>
-                      <p className="text-green-600 dark:text-green-400 font-bold mt-2">
-                        ₹{product.price}
-                      </p>
-                    </div>
-                    <div className="mt-4 text-center">
-                      <span className="inline-block bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded transition">
-                        View Details
-                      </span>
-                    </div>
-                  </div>
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
+          {categories.map(cat => (
+            <Link to={`/shop/${cat.slug}`} key={cat.slug}>
+              <div className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl shadow hover:shadow-xl transition-all overflow-hidden group">
+                <img src={cat.image} alt={cat.name} className="h-48 w-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                <div className="p-4 text-center text-gray-900 dark:text-white">
+                  <h2 className="text-xl font-semibold">{cat.name}</h2>
                 </div>
-              </Link>
-            ))}
-          </div>
-        )}
-
-        {/* Show More Button */}
-        <div className="text-center mt-10">
-          <Link
-            to="/shop/all"
-            className="inline-block bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 transition"
-          >
-            View All Products
-          </Link>
+              </div>
+            </Link>
+          ))}
         </div>
+
+      {/* Show More Button */}
+      <div className="text-center mt-12">
+        <Link
+          to="/shop/all"
+          className="inline-block bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 transition"
+        >
+          View All Products
+        </Link>
       </div>
     </div>
+    </div >
   );
 };
 
