@@ -40,10 +40,15 @@ const AllShopProducts = () => {
                 product.image ||
                 '/placeholder.jpg';
 
+              const hasDiscount = product.discount > 0;
+              const discountedPrice = hasDiscount
+                ? product.price - product.price * (product.discount / 100)
+                : product.price;
+
               return (
                 <Link to={`/item/${product.id}`} key={product.id}>
                   <div className="bg-white dark:bg-[#0f172a] rounded-xl shadow-md hover:shadow-xl transition-all border border-gray-300 dark:border-gray-700 overflow-hidden group relative">
-                    {product.discount > 0 && (
+                    {hasDiscount && (
                       <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
                         {product.discount}% OFF
                       </div>
@@ -51,13 +56,22 @@ const AllShopProducts = () => {
                     <img
                       src={imageUrl}
                       alt={product.name}
-                      className="w-full h-52 object-cover transition-transform duration-300 group-hover:scale-105"
+                      className="w-full h-52 object-contain bg-white dark:bg-gray-800 p-2 transition-transform duration-300 group-hover:scale-105"
                     />
-                    <div className="p-4 flex flex-col justify-between text-gray-900 dark:text-white">
+                    <div className="p-4 text-gray-900 dark:text-white">
                       <h3 className="text-lg font-semibold">{product.name}</h3>
-                      <p className="mt-1 font-bold text-green-600 dark:text-green-400">
-                        ₹{product.price}
-                      </p>
+                      {hasDiscount ? (
+                        <div className="mt-1">
+                          <p className="text-sm text-gray-500 line-through">₹{product.price}</p>
+                          <p className="text-lg font-bold text-green-600 dark:text-green-400">
+                            ₹{discountedPrice.toFixed(0)}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="mt-1 text-lg font-bold text-green-600 dark:text-green-400">
+                          ₹{product.price}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </Link>

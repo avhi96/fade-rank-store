@@ -4,11 +4,11 @@ import { FaShoppingCart } from 'react-icons/fa';
 
 const categories = [
   { name: 'Anime Keychains', slug: 'keychains', image: '/public/images/keychain.jpg' },
-  { name: 'Wall Posters', slug: 'posters', image: '/public/images/banner.jpeg' },
-  { name: 'Anime Wallpapers', slug: 'wallpapers', image: '/images/wallpapers.jpg' },
+  { name: 'Wall Posters', slug: 'posters', image: '/public/images/wallpaper.jpg' },
+  { name: 'Anime Wallpapers', slug: 'wallpapers', image: '/public/images/banner.jpeg' },
   { name: 'Anime Figurines', slug: 'figurines', image: '/public/images/feagure.jpg' },
-  { name: 'Stickers & Decals', slug: 'stickers', image: '/images/stickers.jpg' },
-  { name: 'Cosplay Items', slug: 'cosplay', image: '/images/cosplay.jpg' },
+  { name: 'Stickers & Decals', slug: 'stickers', image: '/public/images/stickers.jpg' },
+  { name: 'Cosplay Items', slug: 'cosplay', image: '/public/images/cosplay.jpg' },
 ];
 
 const Shop = () => {

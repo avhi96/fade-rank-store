@@ -54,7 +54,11 @@ const ItemDetails = ({ type = 'shopProducts' }) => {
     toast.success('Item added to cart!');
   };
 
-  const handleBuyNow = () => toast.success('Redirecting to payment...');
+  const handleBuyNow = () => {
+    localStorage.setItem('buyNowItem', JSON.stringify({ ...item, id }));
+    navigate('/checkout');
+  };
+
 
   const handleShare = () => {
     navigator.share?.({
@@ -192,7 +196,20 @@ const ItemDetails = ({ type = 'shopProducts' }) => {
             {[...Array(5)].map((_, i) => <FaStar key={i} />)}
             <span className="text-sm text-gray-600 dark:text-gray-400 ml-2">({item.reviews?.length || 0} reviews)</span>
           </div>
-          <p className="text-4xl font-semibold text-green-600 dark:text-green-400">₹{item.price}</p>
+          {item.discount > 0 ? (
+            <div>
+              <p className="text-2xl text-gray-500 line-through mb-1">₹{item.price}</p>
+              <p className="text-4xl font-semibold text-green-600 dark:text-green-400">
+                ₹{(item.price - item.price * item.discount / 100).toFixed(0)}
+              </p>
+              <p className="text-sm text-red-500 mt-1">{item.discount}% OFF</p>
+            </div>
+          ) : (
+            <p className="text-4xl font-semibold text-green-600 dark:text-green-400">
+              ₹{item.price}
+            </p>
+          )}
+
 
           <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg border dark:border-gray-700 text-sm">
             <p><strong>Delivery:</strong> Free - Est. 5–7 days</p>

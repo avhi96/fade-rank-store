@@ -259,21 +259,54 @@ const Admin = () => {
 
 const ProductGrid = ({ data, type, onDelete, onEdit }) => (
   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-    {data.map(item => (
-      <div key={item.id} className="bg-white dark:bg-gray-800 p-5 rounded shadow border flex flex-col">
-        <img src={item.images?.[0] || item.image || '/placeholder.jpg'} alt={item.name} className="h-40 w-full object-cover rounded mb-2" />
-        <h3 className="text-lg font-bold">{item.name}</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-300 mb-1">₹{item.price}</p>
-        {item.discount > 0 && <p className="text-xs text-red-500">{item.discount}% OFF</p>}
-        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Category: {item.category || 'N/A'}</p>
-        <div className="mt-3 flex gap-2">
-          <button onClick={() => onEdit(item)} className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded">Edit</button>
-          <button onClick={() => onDelete(type, item.id)} className="flex-1 bg-red-600 hover:bg-red-700 text-white py-1 px-3 rounded">Delete</button>
+    {data.map(item => {
+      const originalPrice = Number(item.price);
+      const discountPercent = Number(item.discount) || 0;
+      const finalPrice = discountPercent > 0
+        ? originalPrice - (originalPrice * discountPercent / 100)
+        : originalPrice;
+
+      return (
+        <div key={item.id} className="bg-white dark:bg-gray-800 p-5 rounded shadow border flex flex-col">
+          <img
+            src={item.images?.[0] || item.image || '/placeholder.jpg'}
+            alt={item.name}
+            className="h-40 w-full object-cover rounded mb-2"
+          />
+          <h3 className="text-lg font-bold mb-1">{item.name}</h3>
+
+          {discountPercent > 0 ? (
+            <div className="mb-1">
+              <p className="text-sm text-gray-500 line-through">₹{originalPrice}</p>
+              <p className="text-green-600 dark:text-green-400 font-semibold">₹{finalPrice.toFixed(0)}</p>
+              <span className="text-xs text-red-500">{discountPercent}% OFF</span>
+            </div>
+          ) : (
+            <p className="text-green-600 dark:text-green-400 font-semibold mb-1">₹{finalPrice}</p>
+          )}
+
+          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Category: {item.category || 'N/A'}</p>
+
+          <div className="mt-3 flex gap-2">
+            <button
+              onClick={() => onEdit(item)}
+              className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => onDelete(type, item.id)}
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white py-1 px-3 rounded"
+            >
+              Delete
+            </button>
+          </div>
         </div>
-      </div>
-    ))}
+      );
+    })}
   </div>
 );
+
 
 const OrderGrid = ({ orders, type, nested, onDelete, onComplete }) => (
   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">

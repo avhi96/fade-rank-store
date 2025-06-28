@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { db } from '../firebase';
-import { collection, addDoc } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 
 const CartPage = () => {
@@ -23,9 +21,11 @@ const CartPage = () => {
     toast.success('Item removed from cart');
   };
 
-  const handlePlaceOrder = async () => {
+  const totalPrice = cartItems.reduce((acc, item) => acc + (item.price || 0), 0);
+
+  const handleCheckout = () => {
     if (!user) {
-      toast.error("You must be logged in to place an order.");
+      toast.error("Please log in to continue checkout.");
       return;
     }
 
@@ -34,27 +34,8 @@ const CartPage = () => {
       return;
     }
 
-    const order = {
-      items: cartItems,
-      createdAt: Date.now(),
-      status: 'Processing',
-      username: user.username || user.email,
-      userId: user.uid,
-    };
-
-    try {
-      await addDoc(collection(db, 'users', user.uid, 'orders'), order);
-      localStorage.removeItem('cart');
-      setCartItems([]);
-      toast.success("Order placed successfully!");
-      navigate('/orders');
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to place order.");
-    }
+    navigate('/checkout');
   };
-
-  const totalPrice = cartItems.reduce((acc, item) => acc + (item.price || 0), 0);
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10 text-gray-800 dark:text-white">
@@ -96,13 +77,13 @@ const CartPage = () => {
             ))}
           </div>
 
-          <div className="mt-6 flex justify-between items-center">
+          <div className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-xl font-semibold">Total: ₹{totalPrice}</p>
             <button
-              onClick={handlePlaceOrder}
+              onClick={handleCheckout}
               className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition"
             >
-              Place Order
+              Proceed to Checkout
             </button>
           </div>
         </>

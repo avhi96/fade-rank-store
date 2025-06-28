@@ -30,7 +30,13 @@ const Profile = () => {
       label: 'My Orders',
       action: () => navigate('/orders'),
     },
+    {
+      icon: <FaBoxOpen className="text-purple-600" />,
+      label: 'Saved Addresses',
+      action: () => navigate('/saved-addresses'),
+    },
   ];
+
 
   if (!user) {
     return (
