@@ -6,32 +6,32 @@ const categories = [
   {
     name: 'Anime Accessories',
     slug: 'accessories',
-    image: '/public/images/keychain.jpg',
+    image: '/images/keychain.jpg',
   },
   {
     name: 'Wall Decor',
     slug: 'wall-decor',
-    image: '/public/images/wallpaper.jpg',
+    image: '/images/wallpaper.jpg',
   },
   {
     name: 'Desk & Tech Gear',
     slug: 'tech-gear',
-    image: '/public/images/mousepad.jpg',
+    image: '/images/mousepad.jpg',
   },
   {
     name: 'Anime Figurines',
     slug: 'figurines',
-    image: '/public/images/feagure.jpg',
+    image: '/images/feagure.jpg',
   },
   {
     name: 'Stickers & Decals',
     slug: 'stickers',
-    image: '/public/images/stickers.jpg',
+    image: '/images/stickers.jpg',
   },
   {
     name: 'Costumes & Wearables',
     slug: 'cosplay',
-    image: '/public/images/cosplay.jpg',
+    image: '/images/cosplay.jpg',
   },
 ];
 
