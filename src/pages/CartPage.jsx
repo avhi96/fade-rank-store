@@ -39,7 +39,7 @@ const CartPage = () => {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10 text-gray-800 dark:text-white">
-      <h1 className="text-2xl font-bold mb-6">🛒 My Cart</h1>
+      <h1 className="text-2xl font-bold mb-6">My Cart</h1>
 
       {cartItems.length === 0 ? (
         <p className="text-gray-600 dark:text-gray-400">Your cart is empty.</p>
@@ -53,10 +53,10 @@ const CartPage = () => {
               >
                 <div
                   className="flex gap-4 items-center cursor-pointer"
-                  onClick={() => navigate(`/${item.type || 'products'}/${item.id}`)}
+                  onClick={() => navigate(`/${item.type || 'item'}/${item.id}`)}
                 >
                   <img
-                    src={item.image}
+                    src={item.images?.[0] || item.image || '/placeholder.jpg'}
                     alt={item.name}
                     className="w-20 h-20 object-cover rounded hover:opacity-90 transition"
                   />

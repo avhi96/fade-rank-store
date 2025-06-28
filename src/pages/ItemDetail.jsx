@@ -169,7 +169,7 @@ const ItemDetails = ({ type = 'shopProducts' }) => {
                 }}
                 className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
               >
-                ◀ Prev
+                Prev
               </button>
               <span className="text-sm text-gray-600 dark:text-gray-400">
                 {item.images.indexOf(activeImage) + 1} / {item.images.length}
@@ -183,7 +183,7 @@ const ItemDetails = ({ type = 'shopProducts' }) => {
                 }}
                 className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
               >
-                Next ▶
+                Next
               </button>
             </div>
           )}

@@ -1,3 +1,4 @@
+// 🛠️ Admin.jsx (Final Full Version)
 import React, { useEffect, useState } from 'react';
 import {
   collection, getDocs, addDoc, deleteDoc, updateDoc,
@@ -26,14 +27,14 @@ const Admin = () => {
     description: '',
     price: '',
     discount: '',
-    imageURL: '',
+    imageURLs: '',
     type: 'shop',
     demoUrl: '',
     category: '',
   });
   const [files, setFiles] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
   const [editingId, setEditingId] = useState(null);
-
   const [shopProducts, setShopProducts] = useState([]);
   const [digitalProducts, setDigitalProducts] = useState([]);
   const [shopOrders, setShopOrders] = useState([]);
@@ -74,7 +75,10 @@ const Admin = () => {
     const data = new FormData();
     data.append('file', file);
     data.append('upload_preset', UPLOAD_PRESET);
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: 'POST', body: data });
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+      method: 'POST',
+      body: data
+    });
     const json = await res.json();
     return json.secure_url;
   };
@@ -83,14 +87,20 @@ const Admin = () => {
     e.preventDefault();
     setUploading(true);
     try {
-      let uploaded = [];
+      let uploaded = [...existingImages];
       if (files.length > 0) {
-        for (const file of files) uploaded.push(await uploadToCloudinary(file));
-      } else if (form.imageURL.trim()) {
-        uploaded = [form.imageURL.trim()];
-      } else {
-        throw new Error("Image required");
+        for (const file of files) {
+          const url = await uploadToCloudinary(file);
+          uploaded.push(url);
+        }
       }
+
+      if (form.imageURLs.trim()) {
+        const urls = form.imageURLs.split(/[\n,]+/).map(u => u.trim()).filter(Boolean);
+        uploaded.push(...urls);
+      }
+
+      if (uploaded.length === 0) throw new Error('At least one image is required.');
 
       const data = {
         name: form.name,
@@ -103,14 +113,11 @@ const Admin = () => {
       };
 
       const target = form.type === 'shop' ? 'shopProducts' : 'products';
-
-      if (form.type === 'shop') {
-        data.category = form.category || '';
-      }
+      if (form.type === 'shop') data.category = form.category || '';
 
       if (editingId) {
         await updateDoc(doc(db, target, editingId), data);
-        toast.success('Updated successfully');
+        toast.success('Product updated');
         setEditingId(null);
       } else {
         await addDoc(collection(db, target), data);
@@ -122,12 +129,13 @@ const Admin = () => {
         description: '',
         price: '',
         discount: '',
-        imageURL: '',
+        imageURLs: '',
         type: 'shop',
         demoUrl: '',
         category: '',
       });
       setFiles([]);
+      setExistingImages([]);
       fetchAll();
     } catch (err) {
       toast.error(err.message);
@@ -142,11 +150,12 @@ const Admin = () => {
       description: item.description || '',
       price: item.price || '',
       discount: item.discount || '',
-      imageURL: item.images?.[0] || item.image || '',
+      imageURLs: '',
       type,
       demoUrl: item.demoUrl || '',
       category: item.category || '',
     });
+    setExistingImages(item.images || []);
     setEditingId(item.id);
     window.scrollTo(0, 0);
   };
@@ -187,6 +196,7 @@ const Admin = () => {
         ))}
       </div>
 
+      {/* Add Product Form */}
       {tab === 'addProduct' && (
         <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow max-w-xl mx-auto border space-y-4">
           <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} className={inputStyle}>
@@ -204,126 +214,62 @@ const Admin = () => {
           )}
 
           <input type="text" placeholder="Product Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className={inputStyle} required />
-          <textarea placeholder="Description" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className={`${inputStyle} h-32`} />
+          <textarea placeholder="Description" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className={`${inputStyle} h-24`} />
           <input type="number" placeholder="Price" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} className={inputStyle} required />
           <input type="number" placeholder="% Off (Optional)" value={form.discount} onChange={e => setForm({ ...form, discount: e.target.value })} className={inputStyle} />
           {form.type === 'digital' && (
             <input type="url" placeholder="Demo Link (Optional)" value={form.demoUrl} onChange={e => setForm({ ...form, demoUrl: e.target.value })} className={inputStyle} />
           )}
           <input type="file" accept="image/*" multiple onChange={e => setFiles(Array.from(e.target.files))} className="text-sm" />
-          <input type="url" placeholder="Image URL (optional)" value={form.imageURL} onChange={e => setForm({ ...form, imageURL: e.target.value })} className={inputStyle} />
+          <textarea placeholder="Image URLs (comma or newline separated)" value={form.imageURLs} onChange={e => setForm({ ...form, imageURLs: e.target.value })} className={`${inputStyle} h-24`} />
+
+          {existingImages.length > 0 && (
+            <ul className="space-y-2">
+              {existingImages.map((url, i) => (
+                <li key={i} className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <img src={url} alt="" className="w-14 h-14 object-cover rounded" />
+                    <span className="truncate max-w-xs">{url}</span>
+                  </div>
+                  <button onClick={() => setExistingImages(existingImages.filter((_, idx) => idx !== i))} className="text-red-500">Remove</button>
+                </li>
+              ))}
+            </ul>
+          )}
+
           <button type="submit" disabled={uploading} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">
             {uploading ? 'Uploading...' : editingId ? 'Update Product' : 'Add Product'}
           </button>
         </form>
       )}
 
-      {tab === 'shopItems' && (
-        <ProductGrid data={shopProducts} type="shopProducts" onDelete={handleDelete} onEdit={item => handleEdit(item, 'shop')} />
-      )}
-
-      {tab === 'digitalItems' && (
-        <ProductGrid data={digitalProducts} type="products" onDelete={handleDelete} onEdit={item => handleEdit(item, 'digital')} />
-      )}
-
-      {tab === 'shopOrders' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {shopOrders.map(order => (
-            <div key={order.id} className="bg-white dark:bg-gray-800 p-5 rounded shadow border flex flex-col justify-between">
-              <div className="space-y-1 text-sm">
-                <p><strong>Order ID:</strong> {order.id}</p>
-                <p><strong>User Name:</strong> {order.username || 'Unknown'}</p>
-                <p><strong>Total:</strong> ₹{order.items?.reduce((sum, item) => {
-                  const original = item.price || 0;
-                  const discount = item.discount || 0;
-                  const final = discount > 0 ? original - (original * discount / 100) : original;
-                  return sum + final;
-                }, 0).toFixed(0)}</p>
-
-                <p><strong>Status:</strong> <span className={`font-semibold ${order.status === 'completed' ? 'text-green-600' : 'text-yellow-600'}`}>{order.status || 'pending'}</span></p>
-                <p><strong>Items:</strong></p>
-                <ul className="list-disc list-inside text-gray-600 dark:text-gray-300">
-                  {order.items?.map((item, idx) => {
-                    const original = item.price || 0;
-                    const discount = item.discount || 0;
-                    const final = discount > 0 ? original - (original * discount / 100) : original;
-
-                    return (
-                      <li key={idx}>
-                        {item.name} - ₹
-                        {discount > 0 ? (
-                          <>
-                            <span className="line-through text-gray-400 mr-1">{original}</span>
-                            <span className="text-green-600">{final.toFixed(0)}</span>
-                            <span className="text-xs text-red-500 ml-1">({discount}% OFF)</span>
-                          </>
-                        ) : (
-                          <span>{original}</span>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-
-              </div>
-              <div className="mt-3 flex gap-2">
-                <button onClick={() => handleComplete(order.userId, order.id)} className="flex-1 bg-green-600 hover:bg-green-700 text-white py-1 px-3 rounded">Complete</button>
-                <button onClick={() => handleDelete(`users/${order.userId}/orders`, order.id)} className="flex-1 bg-red-600 hover:bg-red-700 text-white py-1 px-3 rounded">Delete</button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
+      {/* Other Tabs */}
+      {tab === 'shopItems' && <ProductGrid data={shopProducts} type="shopProducts" onDelete={handleDelete} onEdit={(item) => handleEdit(item, 'shop')} />}
+      {tab === 'digitalItems' && <ProductGrid data={digitalProducts} type="products" onDelete={handleDelete} onEdit={(item) => handleEdit(item, 'digital')} />}
+      {tab === 'shopOrders' && <OrderGrid orders={shopOrders} type="users" nested="orders" onDelete={handleDelete} onComplete={handleComplete} />}
       {tab === 'digitalOrders' && <OrderGrid orders={digitalOrders} type="productOrders" onDelete={handleDelete} onComplete={handleComplete} />}
       {tab === 'serviceOrders' && <OrderGrid orders={serviceOrders} type="orders" onDelete={handleDelete} onComplete={handleComplete} />}
     </div>
   );
 };
 
+// Reusable ProductGrid Component
 const ProductGrid = ({ data, type, onDelete, onEdit }) => (
   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
     {data.map(item => {
-      const originalPrice = Number(item.price);
-      const discountPercent = Number(item.discount) || 0;
-      const finalPrice = discountPercent > 0
-        ? originalPrice - (originalPrice * discountPercent / 100)
-        : originalPrice;
+      const original = item.price;
+      const discount = item.discount;
+      const final = discount > 0 ? original - (original * discount / 100) : original;
 
       return (
         <div key={item.id} className="bg-white dark:bg-gray-800 p-5 rounded shadow border flex flex-col">
-          <img
-            src={item.images?.[0] || item.image || '/placeholder.jpg'}
-            alt={item.name}
-            className="h-40 w-full object-cover rounded mb-2"
-          />
+          <img src={item.images?.[0]} alt={item.name} className="h-40 w-full object-cover rounded mb-2" />
           <h3 className="text-lg font-bold mb-1">{item.name}</h3>
-
-          {discountPercent > 0 ? (
-            <div className="mb-1">
-              <p className="text-sm text-gray-500 line-through">₹{originalPrice}</p>
-              <p className="text-green-600 dark:text-green-400 font-semibold">₹{finalPrice.toFixed(0)}</p>
-              <span className="text-xs text-red-500">{discountPercent}% OFF</span>
-            </div>
-          ) : (
-            <p className="text-green-600 dark:text-green-400 font-semibold mb-1">₹{finalPrice}</p>
-          )}
-
+          <p className="text-green-600 dark:text-green-400 font-semibold mb-1">₹{final}</p>
           <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Category: {item.category || 'N/A'}</p>
-
           <div className="mt-3 flex gap-2">
-            <button
-              onClick={() => onEdit(item)}
-              className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded"
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => onDelete(type, item.id)}
-              className="flex-1 bg-red-600 hover:bg-red-700 text-white py-1 px-3 rounded"
-            >
-              Delete
-            </button>
+            <button onClick={() => onEdit(item)} className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded">Edit</button>
+            <button onClick={() => onDelete(type, item.id)} className="flex-1 bg-red-600 hover:bg-red-700 text-white py-1 px-3 rounded">Delete</button>
           </div>
         </div>
       );
@@ -331,20 +277,18 @@ const ProductGrid = ({ data, type, onDelete, onEdit }) => (
   </div>
 );
 
-
+// Reusable OrderGrid Component
 const OrderGrid = ({ orders, type, nested, onDelete, onComplete }) => (
   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
     {orders.map(order => (
-      <div key={order.id} className="bg-white dark:bg-gray-800 p-5 rounded shadow border flex flex-col justify-between">
-        <div className="space-y-1 text-sm">
-          <p><strong>Order ID:</strong> {order.id}</p>
-          <p><strong>User:</strong> {order.username || order.userId || order.name || 'Unknown'}</p>
-          <p><strong>Status:</strong> <span className={`font-semibold ${order.status === 'completed' ? 'text-green-600' : 'text-yellow-600'}`}>{order.status || 'pending'}</span></p>
-          <p><strong>Total:</strong> ₹{order.items?.reduce((sum, item) => sum + (item.price || 0), 0) || order.price || 0}</p>
-        </div>
+      <div key={order.id} className="bg-white dark:bg-gray-800 p-5 rounded shadow border">
+        <p><strong>Order ID:</strong> {order.id}</p>
+        <p><strong>User:</strong> {order.username || order.userId || 'Unknown'}</p>
+        <p><strong>Status:</strong> {order.status}</p>
+        <p><strong>Total:</strong> ₹{order.items?.reduce((sum, item) => sum + (item.price || 0), 0) || order.price || 0}</p>
         <div className="mt-3 flex gap-2">
-          <button onClick={() => onComplete(nested ? `${type}/${order.userId}/${nested}` : type, order.id)} className="flex-1 bg-green-600 hover:bg-green-700 text-white py-1 px-3 rounded">Complete</button>
-          <button onClick={() => onDelete(nested ? `${type}/${order.userId}/${nested}` : type, order.id)} className="flex-1 bg-red-600 hover:bg-red-700 text-white py-1 px-3 rounded">Delete</button>
+          <button onClick={() => onComplete(nested ? `${type}/${order.userId}/${nested}` : type, order.id)} className="flex-1 bg-green-600 text-white rounded py-1">Complete</button>
+          <button onClick={() => onDelete(nested ? `${type}/${order.userId}/${nested}` : type, order.id)} className="flex-1 bg-red-600 text-white rounded py-1">Delete</button>
         </div>
       </div>
     ))}

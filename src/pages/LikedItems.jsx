@@ -24,8 +24,8 @@ const LikedItems = () => {
             id: doc.id,
             name: data.name,
             price: data.price,
-            type: data.type || 'shopProducts',
-            image: data.image ?? '', // let logic below decide if fallback is needed
+            type: data.type || 'item',
+            image: data.image ?? '',
           };
         });
         setLikedItems(items);
@@ -59,7 +59,7 @@ const LikedItems = () => {
 
   return (
     <div className="max-w-6xl mx-auto p-6 text-gray-800 dark:text-gray-100">
-      <h2 className="text-2xl font-bold mb-6">❤️ Your Liked Items</h2>
+      <h2 className="text-2xl font-bold mb-6">Your Liked Items</h2>
 
       {likedItems.length === 0 ? (
         <p className="text-gray-500 dark:text-gray-400">You haven't liked any items yet.</p>
@@ -71,7 +71,7 @@ const LikedItems = () => {
               className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700 transition hover:shadow-md"
             >
               <div
-                onClick={() => navigate(`/${item.type}/${item.id}`)}
+                onClick={() => navigate(`/item/${item.id}`)}
                 className="cursor-pointer"
               >
                 <img
@@ -90,7 +90,7 @@ const LikedItems = () => {
 
               <div className="flex justify-between mt-4">
                 <button
-                  onClick={() => navigate(`/${item.type}/${item.id}`)}
+                  onClick={() => navigate(`/item/${item.id}`)}
                   className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
                 >
                   View Details
@@ -103,6 +103,7 @@ const LikedItems = () => {
                 </button>
               </div>
             </div>
+
           ))}
         </div>
       )}
