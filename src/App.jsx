@@ -9,8 +9,8 @@ import Shop from './pages/Shop';
 import AllShopProducts from './pages/AllShopProducts';
 import ItemDetails from './pages/ItemDetail';
 import CategoryPage from './pages/CategoryPage';
-// import Products from './pages/Products';
-// import Services from './pages/Services';
+import Products from './pages/Products';
+import Services from './pages/Services';
 import Contact from './pages/Contact';
 import Terms from './pages/Terms';
 import Login from './pages/Login';
@@ -23,10 +23,10 @@ import LikedItems from './pages/LikedItems';
 import SavedAddresses from './pages/SavedAddresses';
 import Cart from './pages/CartPage';
 import MyOrders from './pages/MyOrders';
-// import ProductDetails from './pages/ProductDetails';
+import ProductDetails from './pages/ProductDetails';
 import EditProfile from './pages/EditProfile';
 import Checkout from './pages/Checkout';
-// import AllProducts from './pages/AllProducts';
+import AllProducts from './pages/AllProducts';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
@@ -71,10 +71,10 @@ export default function App() {
                 <Route path="/shop/all" element={<AllShopProducts />} />
                 <Route path="/item/:id" element={<ItemDetails />} />
                 <Route path="/shop/:slug" element={<CategoryPage />} />
-                {/* <Route path="/products" element={<Products />} /> */}
-                {/* <Route path="/products/:id" element={<ProductDetails />} /> */}
-                {/* <Route path="/products/all" element={<AllProducts />} /> */}
-                {/* <Route path="/services" element={<Services />} /> */}
+                <Route path="/products" element={<Products />} />
+                <Route path="/products/:id" element={<ProductDetails />} />
+                <Route path="/products/all" element={<AllProducts />} />
+                <Route path="/services" element={<Services />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/liked" element={<LikedItems />} />

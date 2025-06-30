@@ -25,7 +25,7 @@ const Products = () => {
     <div className="min-h-screen bg-white dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-screen-2xl mx-auto">
         <h1 className="text-4xl font-bold text-center text-gray-900 dark:text-white mb-10">
-          🛍️ Digital Products
+           Digital Products
         </h1>
 
         {products.length === 0 ? (
@@ -75,7 +75,7 @@ const Products = () => {
                 to="/products/all"
                 className="inline-block bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
               >
-                Show More Products
+                View All Products
               </Link>
             </div>
           </>

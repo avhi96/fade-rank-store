@@ -215,7 +215,7 @@ const Services = () => {
               </ul>
 
               <div className="mt-auto text-center">
-                <p className="text-xl font-bold text-blue-600 dark:text-blue-400 mb-4">₹{service.price}</p>
+                <p className="text-xl font-bold text-green-600 dark:text-green-400 mb-4">₹{service.price}</p>
                 <button
                   onClick={() => setSelectedService(service)}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md transition"
@@ -247,7 +247,7 @@ const Services = () => {
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-blue-600 dark:text-blue-400 font-bold mb-1">{s.price}</p>
+                <p className="text-green-600 dark:text-green-400 font-bold mb-1">{s.price}</p>
                 <button
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm"
                   onClick={() =>

@@ -105,7 +105,7 @@ const SavedAddresses = () => {
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-10 bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
-      <h1 className="text-3xl font-bold mb-6 text-center">📦 Saved Addresses</h1>
+      <h1 className="text-3xl font-bold mb-6 text-center">Saved Addresses</h1>
 
       {/* Address Form */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
