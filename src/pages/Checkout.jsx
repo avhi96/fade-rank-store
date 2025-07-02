@@ -109,7 +109,7 @@ const Checkout = () => {
     setLoading(true);
 
     try {
-      const res = await fetch('http://localhost:4000/create-order', {
+      const res = await fetch('https://fadebackend.onrender.com/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: total }),
