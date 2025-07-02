@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaShoppingCart } from 'react-icons/fa';
+import { useCart } from '../context/cartContext';
 
 const categories = [
   {
@@ -36,13 +37,11 @@ const categories = [
 ];
 
 const Shop = () => {
-  const [cart, setCart] = useState([]); // Temporary local cart state
+  const { cart, addToCart } = useCart();
   const navigate = useNavigate();
 
-  // Calculate total cart price
   const totalPrice = cart.reduce((total, item) => {
-    const hasDiscount = item.discount > 0;
-    const price = hasDiscount
+    const price = item.discount > 0
       ? item.price - item.price * (item.discount / 100)
       : item.price;
     return total + price * item.quantity;
@@ -50,14 +49,14 @@ const Shop = () => {
 
   return (
     <div className="relative min-h-screen py-12 px-4 bg-white dark:bg-gray-900">
-
+      
       {/* 🛒 Floating Cart Button */}
       <div
         onClick={() => navigate('/cart')}
         className="fixed top-6 right-6 z-50 bg-blue-600 dark:bg-blue-600 text-white px-5 py-2 rounded-full cursor-pointer shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-semibold flex items-center gap-2"
       >
         <FaShoppingCart className="text-white text-base" />
-        ₹{totalPrice.toFixed(0)}
+        {cart.length > 0 ? `₹${totalPrice.toFixed(0)}` : 'Cart Empty'}
       </div>
 
       <div className="max-w-7xl mx-auto">
@@ -82,7 +81,7 @@ const Shop = () => {
           ))}
         </div>
 
-        {/* Show More Button */}
+        {/* Show All Products Button */}
         <div className="text-center mt-12">
           <Link
             to="/shop/all"

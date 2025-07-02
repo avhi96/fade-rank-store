@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { FaShoppingCart } from 'react-icons/fa';
+import { useCart } from '../context/cartContext';
 
 const categoryNames = {
   accessories: 'Anime Accessories',
@@ -16,9 +17,10 @@ const categoryNames = {
 const CategoryPage = () => {
   const { slug } = useParams();
   const [products, setProducts] = useState([]);
-  const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { cart, addToCart } = useCart();
+
   const categoryTitle = categoryNames[slug] || 'Category';
 
   useEffect(() => {
@@ -26,7 +28,9 @@ const CategoryPage = () => {
       try {
         const snapshot = await getDocs(collection(db, 'shopProducts'));
         const all = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        const filtered = all.filter(item => item.category === slug);
+        const filtered = all.filter(
+          item => item.category === slug || item.category === categoryTitle
+        );
         setProducts(filtered);
       } catch (err) {
         console.error('Failed to fetch category products:', err);
@@ -38,20 +42,18 @@ const CategoryPage = () => {
     fetchProducts();
   }, [slug]);
 
-  const addToCart = (product) => {
-    const exists = cart.find(item => item.id === product.id);
-    if (exists) {
+  const isInCart = (productId) => cart.some(item => item.id === productId);
+
+  const handleAddToCart = (product) => {
+    if (isInCart(product.id)) {
       navigate('/cart');
     } else {
-      setCart([...cart, { ...product, quantity: 1 }]);
+      addToCart(product);
     }
   };
 
-  const isInCart = (productId) => cart.some(item => item.id === productId);
-
   const totalPrice = cart.reduce((total, item) => {
-    const hasDiscount = item.discount > 0;
-    const price = hasDiscount
+    const price = item.discount > 0
       ? item.price - item.price * (item.discount / 100)
       : item.price;
     return total + price * item.quantity;
@@ -60,10 +62,10 @@ const CategoryPage = () => {
   return (
     <div className="min-h-screen py-12 px-4 bg-white dark:bg-gray-900 relative">
 
-      {/* 🛒 Floating Cart Button */}
+      {/* Floating Cart Button */}
       <div
         onClick={() => navigate('/cart')}
-        className="fixed top-5 right-5 z-50 bg-blue-600 dark:bg-blue-600 text-white px-5 py-2 rounded-full cursor-pointer shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-semibold flex items-center gap-2"
+        className="fixed top-5 right-5 z-50 bg-blue-600 text-white px-5 py-2 rounded-full cursor-pointer shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-semibold flex items-center gap-2"
       >
         <FaShoppingCart className="text-white text-base" />
         ₹{totalPrice.toFixed(0)}
@@ -83,8 +85,7 @@ const CategoryPage = () => {
             {products.map(product => {
               const imageUrl =
                 (Array.isArray(product.images) && product.images.length > 0 && product.images[0]) ||
-                product.image ||
-                '/placeholder.jpg';
+                product.image || '/placeholder.jpg';
 
               const hasDiscount = product.discount > 0;
               const discountedPrice = hasDiscount
@@ -94,12 +95,16 @@ const CategoryPage = () => {
               const inCart = isInCart(product.id);
 
               return (
-                <div key={product.id} className="bg-white dark:bg-[#0f172a] rounded-xl shadow-md hover:shadow-lg transition border border-gray-300 dark:border-gray-700 overflow-hidden group relative">
+                <div
+                  key={product.id}
+                  className="bg-white dark:bg-[#0f172a] rounded-xl shadow-md hover:shadow-lg transition border border-gray-300 dark:border-gray-700 overflow-hidden group relative"
+                >
                   {hasDiscount && (
                     <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
                       {product.discount}% OFF
                     </div>
                   )}
+
                   <Link to={`/item/${product.id}`}>
                     <img
                       src={imageUrl}
@@ -107,8 +112,10 @@ const CategoryPage = () => {
                       className="w-full h-52 object-contain bg-white dark:bg-gray-800 p-2 transition-transform duration-300 group-hover:scale-105"
                     />
                   </Link>
+
                   <div className="p-4 text-gray-900 dark:text-white">
                     <h3 className="text-lg font-semibold">{product.name}</h3>
+
                     {hasDiscount ? (
                       <div className="mt-1">
                         <p className="text-sm text-gray-500 line-through">₹{product.price}</p>
@@ -122,9 +129,8 @@ const CategoryPage = () => {
                       </p>
                     )}
 
-                    {/* Add/Go to Cart Button */}
                     <button
-                      onClick={() => addToCart(product)}
+                      onClick={() => handleAddToCart(product)}
                       className={`mt-4 w-full ${
                         inCart ? 'bg-gray-700 hover:bg-gray-800' : 'bg-blue-600 hover:bg-blue-700'
                       } text-white text-sm py-2 rounded-md transition`}

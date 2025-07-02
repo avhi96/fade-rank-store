@@ -40,9 +40,9 @@ const Products = () => {
 
                     <img
                       src={
-                        product.images?.[0] || // ✅ Check first image from array
-                        product.image ||       // ✅ Or single image field
-                        '/placeholder.jpg'     // ✅ Or fallback
+                        product.images?.[0] ||
+                        product.image ||       
+                        '/placeholder.jpg'     
                       }
                       alt={product.name}
                       className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105 z-10"

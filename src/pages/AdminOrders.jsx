@@ -1,158 +1,154 @@
 import React, { useEffect, useState } from 'react';
+import { collection, getDocs, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
-import {
-    collection,
-    getDocs,
-    deleteDoc,
-    doc,
-    updateDoc,
-    orderBy,
-    query
-} from 'firebase/firestore';
-import { useAuth } from '../context/AuthContext';
-import toast from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 
 const AdminOrders = () => {
-    const { user, isAdmin, loading } = useAuth();
-    const [orders, setOrders] = useState([]);
-    const [ordersLoading, setOrdersLoading] = useState(true);
+  const [orders, setOrders] = useState([]);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
+  useEffect(() => {
+    fetchOrders();
+  }, []);
 
-    useEffect(() => {
-        if (!user || !isAdmin) return;
+  const fetchOrders = async () => {
+    try {
+      const userSnap = await getDocs(collection(db, 'users'));
+      const allOrders = [];
 
-        const fetchOrders = async () => {
-            try {
-                const q = query(collection(db, 'orders'));
-                const snap = await getDocs(q);
-                const orderList = snap.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                }));
-                toast.success("📦 Orders fetched:", orderList);
-                setOrders(orderList);
-            } catch (err) {
-                toast.error("Error fetching orders:", err);
-            } finally {
-                setOrdersLoading(false);
-            }
-            console.log("👤 Current User:", user?.email);
-            console.log("🛡️ Is Admin:", isAdmin);
+      for (const userDoc of userSnap.docs) {
+        const userId = userDoc.id;
+        const userData = userDoc.data();
+        const orderSnap = await getDocs(collection(db, 'users', userId, 'orders'));
 
-        };
+        orderSnap.forEach(orderDoc => {
+          allOrders.push({
+            ...orderDoc.data(),
+            id: orderDoc.id,
+            userId,
+            username: userData.username || 'Unknown',
+            email: userData.email || 'Unknown',
+          });
+        });
+      }
 
-        fetchOrders();
-    }, [user, isAdmin]);
-
-
-    const handleCancelOrder = async (orderId) => {
-        try {
-            await deleteDoc(doc(db, 'orders', orderId));
-            setOrders(prev => prev.filter(order => order.id !== orderId));
-            toast.success("❌ Order cancelled");
-        } catch (err) {
-            console.error("Error cancelling order:", err);
-            toast.error("Failed to cancel order");
-        }
-    };
-
-    const handleCompleteOrder = async (orderId) => {
-        try {
-            await updateDoc(doc(db, 'orders', orderId), { status: 'completed' });
-            setOrders(prev =>
-                prev.map(order =>
-                    order.id === orderId ? { ...order, status: 'completed' } : order
-                )
-            );
-            toast.success(" Order marked as completed");
-        } catch (err) {
-            console.error("Error completing order:", err);
-            toast.error("Failed to update status");
-        }
-    };
-
-    if (loading) {
-        return <p className="text-center mt-10 text-gray-500">Checking access...</p>;
+      setOrders(allOrders);
+    } catch (err) {
+      toast.error('Failed to fetch orders');
     }
+  };
 
-    if (!user || !isAdmin) {
-        return (
-            <p className="text-center mt-10 text-red-500 font-semibold">
-                Access Denied: Admins only.
-            </p>
-        );
+  const handleComplete = async (order) => {
+    try {
+      await updateDoc(doc(db, 'users', order.userId, 'orders', order.id), {
+        status: 'completed'
+      });
+      toast.success('Order marked as completed');
+      fetchOrders();
+      setSelectedOrder(null);
+    } catch (err) {
+      toast.error('Failed to update order');
     }
+  };
 
+  const handleDelete = async (order) => {
+    try {
+      await deleteDoc(doc(db, 'users', order.userId, 'orders', order.id));
+      toast.success('Order deleted');
+      fetchOrders();
+      setSelectedOrder(null);
+    } catch (err) {
+      toast.error('Failed to delete order');
+    }
+  };
 
+  const getFinalPrice = (price, discount) =>
+    discount > 0 ? price - (price * discount) / 100 : price;
 
-    if (ordersLoading) return (
-        <p className="text-center mt-10 text-gray-500">Loading orders...</p>
-    );
+  return (
+    <div className="max-w-6xl mx-auto py-10 px-4 text-gray-900 dark:text-white">
+      <h1 className="text-3xl font-bold mb-8 text-center">📦 All User Orders</h1>
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {orders.map((order) => (
+          <div
+            key={order.id}
+            onClick={() => setSelectedOrder(order)}
+            className="cursor-pointer border rounded shadow-sm bg-white dark:bg-gray-800 p-4 hover:shadow-md"
+          >
+            <p className="font-medium mb-1">User: {order.username}</p>
+            <p className="text-sm text-gray-500">Email: {order.email}</p>
+            <p className="text-sm mt-2">Items: {order.items.length}</p>
+            <p className="text-sm">Total: ₹{order.amount}</p>
+            <p className="text-sm">Status: <span className="font-semibold">{order.status || 'Pending'}</span></p>
+          </div>
+        ))}
+      </div>
 
-    return (
-        <div className="max-w-7xl mx-auto px-6 py-10">
-            <h1 className="text-3xl font-bold mb-8 text-gray-800 dark:text-white text-center">
-                🛠 Admin Orders Panel
-            </h1>
+      {selectedOrder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-20 z-50">
+          <div className="bg-white dark:bg-gray-900 w-full max-w-2xl rounded-lg p-6 relative overflow-y-auto max-h-[90vh]">
+            <button
+              onClick={() => setSelectedOrder(null)}
+              className="absolute top-2 right-2 text-red-600 text-xl"
+            >
+              &times;
+            </button>
 
-            {orders.length === 0 ? (
-                <p className="text-center text-gray-500">No orders found.</p>
-            ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-6">
-                    {orders.map(order => (
-                        <div
-                            key={order.id}
-                            className="p-4 bg-white dark:bg-gray-800 border rounded-lg shadow transition hover:shadow-lg flex flex-col justify-between"
-                        >
-                            <div>
-                                <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-2">
-                                    {order.serviceTitle}
-                                </h2>
-                                <p className="text-sm text-gray-500 dark:text-gray-300">
-                                    💰 Price: ₹{order.price}
-                                </p>
-                                <p className="text-sm text-gray-500 dark:text-gray-300">
-                                    🕒 {order.createdAt?.toDate().toLocaleString() || 'N/A'}
-                                </p>
-                                <div className="my-2">
-                                    <p className="text-sm text-gray-700 dark:text-gray-200">
-                                        👤 <span className="font-medium">{order.name || 'N/A'}</span>
-                                    </p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                                        📧 {order.email}
-                                    </p>
-                                </div>
-                                <p className={`text-sm font-medium mt-1 ${order.status === 'completed'
-                                    ? 'text-green-500'
-                                    : 'text-yellow-500'
-                                    }`}>
-                                    Status: {order.status || 'pending'}
-                                </p>
-                            </div>
+            <h2 className="text-2xl font-bold mb-4">Order Details</h2>
 
-                            <div className="mt-4 flex flex-col gap-2">
-                                {order.status !== 'completed' && (
-                                    <button
-                                        onClick={() => handleCompleteOrder(order.id)}
-                                        className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm"
-                                    >
-                                        ✅ Mark Completed
-                                    </button>
-                                )}
-                                <button
-                                    onClick={() => handleCancelOrder(order.id)}
-                                    className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm"
-                                >
-                                    ❌ Cancel
-                                </button>
-                            </div>
-                        </div>
-                    ))}
+            <div className="mb-3">
+              <p><strong>Username:</strong> {selectedOrder.username}</p>
+              <p><strong>Email:</strong> {selectedOrder.email}</p>
+              <p><strong>Payment ID:</strong> {selectedOrder.razorpay_payment_id || 'N/A'}</p>
+              <p><strong>Status:</strong> {selectedOrder.status || 'Pending'}</p>
+            </div>
+
+            <div className="mb-3">
+              <h3 className="font-semibold text-lg mb-2">Shipping Address</h3>
+              <p>{selectedOrder.address?.name} — {selectedOrder.address?.phone}</p>
+              <p>{selectedOrder.address?.addressLine}</p>
+              {selectedOrder.address?.landmark && <p>{selectedOrder.address.landmark}</p>}
+              <p>{selectedOrder.address?.city}, {selectedOrder.address?.state} - {selectedOrder.address?.pincode}</p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-lg mb-2">Items Ordered</h3>
+              {selectedOrder.items.map((item, idx) => (
+                <div key={idx} className="mb-2 border-b pb-2">
+                  <p className="font-medium">{item.name}</p>
+                  {item.discount > 0 ? (
+                    <p className="text-sm text-gray-600">
+                      ₹{item.price} → ₹{getFinalPrice(item.price, item.discount).toFixed(0)} ({item.discount}% OFF)
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-600">₹{item.price}</p>
+                  )}
                 </div>
-            )}
+              ))}
+            </div>
+
+            <div className="mt-4 font-bold text-green-600">Total: ₹{selectedOrder.amount}</div>
+
+            <div className="mt-6 flex justify-between">
+              <button
+                onClick={() => handleComplete(selectedOrder)}
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+              >
+                Mark as Complete
+              </button>
+              <button
+                onClick={() => handleDelete(selectedOrder)}
+                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+              >
+                Delete Order
+              </button>
+            </div>
+          </div>
         </div>
-    );
+      )}
+    </div>
+  );
 };
 
 export default AdminOrders;

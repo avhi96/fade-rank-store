@@ -7,6 +7,7 @@ import {
 import { db } from '../firebase';
 import { useAuth, isAdmin } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
+import { Link } from 'react-router-dom';
 
 const inputStyle = "w-full rounded border px-3 py-2 mb-2 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-black dark:text-white placeholder-gray-400";
 
@@ -246,7 +247,22 @@ const Admin = () => {
       {/* Other Tabs */}
       {tab === 'shopItems' && <ProductGrid data={shopProducts} type="shopProducts" onDelete={handleDelete} onEdit={(item) => handleEdit(item, 'shop')} />}
       {tab === 'digitalItems' && <ProductGrid data={digitalProducts} type="products" onDelete={handleDelete} onEdit={(item) => handleEdit(item, 'digital')} />}
-      {tab === 'shopOrders' && <OrderGrid orders={shopOrders} type="users" nested="orders" onDelete={handleDelete} onComplete={handleComplete} />}
+      {tab === 'shopOrders' && (
+        <>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold">Shop Orders</h2>
+           <Link to="/admin-orders" className="text-sm text-blue-500 underline">View All Orders</Link>
+          </div>
+          <OrderGrid
+            orders={shopOrders}
+            type="users"
+            nested="orders"
+            onDelete={handleDelete}
+            onComplete={handleComplete}
+          />
+        </>
+      )}
+
       {tab === 'digitalOrders' && <OrderGrid orders={digitalOrders} type="productOrders" onDelete={handleDelete} onComplete={handleComplete} />}
       {tab === 'serviceOrders' && <OrderGrid orders={serviceOrders} type="orders" onDelete={handleDelete} onComplete={handleComplete} />}
     </div>

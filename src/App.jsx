@@ -19,6 +19,7 @@ import ForgotPassword from './pages/ForgetPassword';
 import PrivateRoute from './components/PrivateRoute';
 import Profile from './pages/Profile';
 import Admin from './pages/Admin';
+import AdminOrders from './pages/AdminOrders';
 import LikedItems from './pages/LikedItems';
 import SavedAddresses from './pages/SavedAddresses';
 import Cart from './pages/CartPage';
@@ -29,6 +30,7 @@ import Checkout from './pages/Checkout';
 import AllProducts from './pages/AllProducts';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import ThankYou from './pages/ThankYou';
 
 
 export default function App() {
@@ -84,6 +86,9 @@ export default function App() {
                 <Route path="/checkout" element={<Checkout/>} />
                 <Route path="/edit-profile" element={<PrivateRoute><EditProfile /></PrivateRoute>} />
                 <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+                <Route path="/admin-orders" element={<AdminOrders />} />
+                <Route path="/thank-you" element={<ThankYou />} />
+
                 <Route
                   path="/admin"
                   element={

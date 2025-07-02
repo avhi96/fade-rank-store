@@ -3,14 +3,13 @@ import { db } from '../firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaShoppingCart } from 'react-icons/fa';
-
+import { useCart } from '../context/cartContext'; // ✅ Import cart context
 
 const AllShopProducts = () => {
   const [products, setProducts] = useState([]);
-  const [cart, setCart] = useState([]);
+  const { cart, addToCart, removeFromCart } = useCart();
   const navigate = useNavigate();
 
-  // Calculate total price
   const totalPrice = cart.reduce((total, item) => {
     const hasDiscount = item.discount > 0;
     const price = hasDiscount
@@ -36,28 +35,21 @@ const AllShopProducts = () => {
     fetchProducts();
   }, []);
 
-  // Add product to cart
-  const addToCart = (product) => {
-    const exists = cart.find(item => item.id === product.id);
-    if (exists) return navigate('/cart');
-
-    setCart([...cart, { ...product, quantity: 1 }]);
-  };
-
   const isInCart = (productId) => cart.some(item => item.id === productId);
+  removeFromCart(item.id);
+
 
   return (
     <div className="min-h-screen py-12 px-4 bg-white dark:bg-gray-900 relative">
 
-      {/* Floating Cart Button (Always Visible) */}
+      {/* 🛒 Floating Cart Button */}
       <div
         onClick={() => navigate('/cart')}
         className="fixed top-5 right-10 z-50 bg-blue-600 dark:bg-blue-500 text-white px-5 py-2 rounded-full cursor-pointer shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-semibold flex items-center gap-2"
       >
         <FaShoppingCart className="text-white text-base" />
-        ₹{totalPrice.toFixed(0)}
+        {cart.length > 0 ? `₹${totalPrice.toFixed(0)}` : 'Cart Empty'}
       </div>
-
 
       <div className="max-w-7xl mx-auto">
         <h1 className="text-4xl font-bold text-center mb-12 text-gray-900 dark:text-white">
@@ -120,7 +112,7 @@ const AllShopProducts = () => {
 
                     {/* Button: Add to Cart or Go to Cart */}
                     <button
-                      onClick={() => addToCart(product)}
+                      onClick={() => inCart ? navigate('/cart') : addToCart(product)}
                       className={`mt-3 w-full ${inCart
                           ? 'bg-gray-700 hover:bg-gray-800'
                           : 'bg-blue-600 hover:bg-blue-700'
