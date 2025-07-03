@@ -37,19 +37,29 @@ const categories = [
 ];
 
 const Shop = () => {
-  const { cart, addToCart } = useCart();
   const navigate = useNavigate();
+  const { cart } = useCart();
 
   const totalPrice = cart.reduce((total, item) => {
-    const price = item.discount > 0
-      ? item.price - item.price * (item.discount / 100)
-      : item.price;
-    return total + price * item.quantity;
+    const price = parseFloat(item.price);
+    const discount = parseFloat(item.discount);
+    const quantity = parseInt(item.quantity);
+
+    const validPrice = isNaN(price) ? 0 : price;
+    const validDiscount = isNaN(discount) ? 0 : discount;
+    const validQty = isNaN(quantity) ? 1 : quantity;
+
+    const finalPrice = validDiscount > 0
+      ? validPrice - validPrice * (validDiscount / 100)
+      : validPrice;
+
+    return total + finalPrice * validQty;
   }, 0);
+
+
 
   return (
     <div className="relative min-h-screen py-12 px-4 bg-white dark:bg-gray-900">
-      
       {/* 🛒 Floating Cart Button */}
       <div
         onClick={() => navigate('/cart')}

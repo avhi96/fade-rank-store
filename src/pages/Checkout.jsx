@@ -14,13 +14,13 @@ import { toast } from 'react-hot-toast';
 
 const Checkout = () => {
   const { user } = useAuth();
-  const { cart: contextCart } = useCart();
+  const { cart: contextCart, clearCart } = useCart();
   const navigate = useNavigate();
+
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(false);
-
   const [newAddress, setNewAddress] = useState({
     name: '',
     phone: '',
@@ -31,12 +31,10 @@ const Checkout = () => {
     pincode: '',
   });
 
-  // ✅ Use cart from context or "buyNowItem"
+  // Load cart data
   useEffect(() => {
     const buyNowItem = JSON.parse(localStorage.getItem('buyNowItem'));
-    const hasCartItems = contextCart && contextCart.length > 0;
-
-    if (hasCartItems) {
+    if (contextCart && contextCart.length > 0) {
       setCart(contextCart);
     } else if (buyNowItem) {
       setCart([buyNowItem]);
@@ -45,7 +43,7 @@ const Checkout = () => {
     }
   }, [contextCart]);
 
-
+  // Load saved addresses
   useEffect(() => {
     if (user) fetchAddresses();
   }, [user]);
@@ -88,13 +86,16 @@ const Checkout = () => {
     }
   };
 
-  const getFinalPrice = (price, discount) => {
-    return discount && discount > 0 ? price - price * (discount / 100) : price;
-  };
+  const getFinalPrice = (price, discount) =>
+    discount > 0 ? price - price * (discount / 100) : price;
 
   const selectedAddress = addresses.find(addr => addr.id === selectedAddressId);
-  const total = cart.reduce((acc, item) => acc + getFinalPrice(item.price, item.discount), 0);
+  const total = cart.reduce(
+    (acc, item) => acc + getFinalPrice(item.price, item.discount || 0),
+    0
+  );
 
+  // Razorpay script
   useEffect(() => {
     const script = document.createElement('script');
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
@@ -114,6 +115,7 @@ const Checkout = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: total }),
       });
+
       const orderData = await res.json();
 
       const options = {
@@ -125,44 +127,59 @@ const Checkout = () => {
         order_id: orderData.id,
         handler: async function (response) {
           try {
-            // Save order to Firestore
-            await addDoc(collection(db, 'users', user.uid, 'orders'), {
-              items: cart,
-              amount: total,
-              address: selectedAddress,
-              razorpay_payment_id: response.razorpay_payment_id,
-              createdAt: Date.now(),
+            const saveOrders = cart.map(item => {
+              const finalPrice = getFinalPrice(item.price, item.discount);
+              const orderData = {
+                userId: user.uid,
+                userEmail: user.email,
+                productName: item.name,
+                image: item.images?.[0] || item.image || '',
+                quantity: item.quantity || 1,
+                price: finalPrice,
+                originalPrice: item.price,
+                discount: item.discount || 0,
+                address: selectedAddress,
+                status: 'pending',
+                razorpay_payment_id: response.razorpay_payment_id,
+                createdAt: new Date(),
+              };
+
+              // Save to both collections
+              return Promise.all([
+                addDoc(collection(db, 'productOrders'), orderData),
+                addDoc(collection(db, 'orders'), {
+                  ...orderData,
+                  type: 'product',
+                })
+              ]);
             });
 
-            // Clear local cart and buyNowItem
+            await Promise.all(saveOrders);
+
+            clearCart();
             localStorage.removeItem('cart');
             localStorage.removeItem('buyNowItem');
 
             toast.success('Payment successful! Redirecting...');
-
-            // Wait a moment before redirect (optional but smooth UX)
             setTimeout(() => {
-              navigate('/thank-you');
+              navigate('/thankyou');
             }, 1500);
-
           } catch (err) {
+            console.error(err);
             toast.error('Payment succeeded but order save failed');
           }
         },
-
-
         prefill: {
           name: selectedAddress?.name,
           contact: selectedAddress?.phone,
         },
-        theme: {
-          color: '#3399cc',
-        },
+        theme: { color: '#3399cc' },
       };
 
       const rzp = new window.Razorpay(options);
       rzp.open();
     } catch (error) {
+      console.error(error);
       toast.error('Something went wrong during payment');
     }
 
@@ -179,20 +196,12 @@ const Checkout = () => {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10 text-gray-900 dark:text-white bg-white dark:bg-gray-900">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-semibold tracking-tight">Checkout</h1>
-        <button
-          onClick={() => navigate('/saved-addresses')}
-          className="text-sm text-blue-600 hover:underline"
-        >
-          Manage Addresses
-        </button>
-      </div>
+      <h1 className="text-3xl font-bold mb-8">Checkout</h1>
 
       <div className="grid md:grid-cols-3 gap-8">
-        {/* Address Section */}
+        {/* Left Side - Address */}
         <div className="md:col-span-2 space-y-6">
-          <h2 className="text-xl font-medium mb-2">Select Delivery Address</h2>
+          <h2 className="text-xl font-semibold">Select Delivery Address</h2>
 
           {addresses.length > 0 ? (
             addresses.map(addr => (
@@ -238,7 +247,7 @@ const Checkout = () => {
           )}
         </div>
 
-        {/* Cart Summary */}
+        {/* Right Side - Order Summary */}
         <div className="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-medium mb-4">Order Summary</h2>
           {cart.map((item, i) => {
@@ -276,6 +285,7 @@ const Checkout = () => {
   );
 };
 
+// 📦 Reusable Input Component
 const Input = ({ label, value, onChange, colSpan }) => (
   <div className={colSpan ? 'sm:col-span-2' : ''}>
     <label className="block text-sm font-medium mb-1">{label}</label>

@@ -11,12 +11,14 @@ import {
 } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
+import InvoiceButton from '../components/orders/InvoiceButton';
+import OrderStatusTracker from '../components/orders/OrderStatusTracker';
+import ETABar from '../components/orders/ETABar';
 
 const MyOrders = () => {
   const { user } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const [showModal, setShowModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
 
@@ -53,7 +55,11 @@ const MyOrders = () => {
         }));
 
         const combined = [...serviceOrders, ...productOrders];
-        combined.sort((a, b) => b.createdAt?.toMillis() - a.createdAt?.toMillis());
+        combined.sort((a, b) => {
+          const aTime = a.createdAt?.toMillis?.() || 0;
+          const bTime = b.createdAt?.toMillis?.() || 0;
+          return bTime - aTime;
+        });
 
         setOrders(combined);
       } catch (err) {
@@ -108,6 +114,8 @@ const MyOrders = () => {
                 <th className="p-3">Price</th>
                 <th className="p-3">Date</th>
                 <th className="p-3">Status</th>
+                <th className="p-3">ETA</th>
+                <th className="p-3">Invoice</th>
                 <th className="p-3">Action</th>
               </tr>
             </thead>
@@ -116,7 +124,7 @@ const MyOrders = () => {
                 <tr key={order.id} className="border-t border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800">
                   <td className="p-3">
                     {order.image ? (
-                      <img src={order.image} alt="thumb" className="w-14 h-14 object-cover rounded-md" />
+                      <img src={order.image} alt={order.productName || order.serviceTitle || 'Order Image'} className="w-14 h-14 object-cover rounded-md" />
                     ) : (
                       <div className="w-14 h-14 bg-gray-200 dark:bg-gray-600 flex items-center justify-center rounded-md text-gray-400 text-xs">📷</div>
                     )}
@@ -127,20 +135,38 @@ const MyOrders = () => {
                       {order.type === 'product' ? 'Product' : 'Service'}
                     </span>
                   </td>
-                  <td className="p-3">₹{order.price}</td>
-                  <td className="p-3">{order.createdAt?.toDate().toLocaleString() || 'N/A'}</td>
+                  <td className="p-3">₹{Number(order.price).toFixed(2)}</td>
                   <td className="p-3">
-                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${order.status === 'completed' ? 'bg-green-200 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-yellow-200 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'}`}>
-                      {order.status || 'Pending'}
-                    </span>
+                    {order.createdAt instanceof Object && typeof order.createdAt.toDate === 'function'
+                      ? order.createdAt.toDate().toLocaleString()
+                      : 'N/A'}
                   </td>
                   <td className="p-3">
-                    <button
-                      onClick={() => confirmCancelOrder(order)}
-                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 text-xs rounded"
-                    >
-                      Cancel ❌
-                    </button>
+                    <OrderStatusTracker status={order.status || 'Pending'} />
+                  </td>
+                  <td className="p-3">
+                    <ETABar createdAt={order.createdAt} deliveryDays={5} />
+                  </td>
+                  <td className="p-3">
+                    <InvoiceButton order={order} />
+                    <div id={`invoice-${order.id}`} className="hidden">
+                      <h1>Invoice for {order.productName}</h1>
+                      <p>Price: ₹{order.price}</p>
+                      <p>Status: {order.status}</p>
+                      <p>Date: {order.createdAt?.toDate().toLocaleDateString()}</p>
+                    </div>
+                  </td>
+                  <td className="p-3">
+                    {order.status === 'completed' ? (
+                      <span className="text-green-600 font-semibold text-sm">Order Completed ✅</span>
+                    ) : (
+                      <button
+                        onClick={() => confirmCancelOrder(order)}
+                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 text-xs rounded"
+                      >
+                        Cancel ❌
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
