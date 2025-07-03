@@ -10,7 +10,7 @@ import AllShopProducts from './pages/AllShopProducts';
 import ItemDetails from './pages/ItemDetail';
 import CategoryPage from './pages/CategoryPage';
 import Products from './pages/Products';
-import Services from './pages/Services';
+// import Services from './pages/Services';
 import Contact from './pages/Contact';
 import Terms from './pages/Terms';
 import Login from './pages/Login';
@@ -76,7 +76,7 @@ export default function App() {
                 <Route path="/products" element={<Products />} />
                 <Route path="/products/:id" element={<ProductDetails />} />
                 <Route path="/products/all" element={<AllProducts />} />
-                <Route path="/services" element={<Services />} />
+                {/* <Route path="/services" element={<Services />} /> */}
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/liked" element={<LikedItems />} />

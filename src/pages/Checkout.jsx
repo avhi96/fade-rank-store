@@ -8,6 +8,7 @@ import {
   setDoc,
   doc,
   addDoc,
+  serverTimestamp,
 } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
@@ -141,7 +142,7 @@ const Checkout = () => {
                 address: selectedAddress,
                 status: 'pending',
                 razorpay_payment_id: response.razorpay_payment_id,
-                createdAt: new Date(),
+                createdAt: serverTimestamp(),
               };
 
               // Save to both collections

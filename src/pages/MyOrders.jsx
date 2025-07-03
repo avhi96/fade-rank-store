@@ -25,43 +25,22 @@ const MyOrders = () => {
   useEffect(() => {
     if (!user) return;
 
-    const fetchAllOrders = async () => {
+    const fetchOrders = async () => {
       try {
-        const serviceQuery = query(
-          collection(db, 'orders'),
-          where('userId', '==', user.uid),
-          orderBy('createdAt', 'desc')
-        );
-        const productQuery = query(
+        const q = query(
           collection(db, 'productOrders'),
           where('userId', '==', user.uid),
           orderBy('createdAt', 'desc')
         );
 
-        const [serviceSnap, productSnap] = await Promise.all([
-          getDocs(serviceQuery),
-          getDocs(productQuery),
-        ]);
-
-        const serviceOrders = serviceSnap.docs.map(doc => ({
+        const snapshot = await getDocs(q);
+        const fetchedOrders = snapshot.docs.map(doc => ({
           id: doc.id,
-          type: 'service',
           ...doc.data(),
-        }));
-        const productOrders = productSnap.docs.map(doc => ({
-          id: doc.id,
-          type: 'product',
-          ...doc.data(),
+          type: 'product', // assuming all are product orders
         }));
 
-        const combined = [...serviceOrders, ...productOrders];
-        combined.sort((a, b) => {
-          const aTime = a.createdAt?.toMillis?.() || 0;
-          const bTime = b.createdAt?.toMillis?.() || 0;
-          return bTime - aTime;
-        });
-
-        setOrders(combined);
+        setOrders(fetchedOrders);
       } catch (err) {
         toast.error(`Error loading orders: ${err.message}`);
       } finally {
@@ -69,7 +48,7 @@ const MyOrders = () => {
       }
     };
 
-    fetchAllOrders();
+    fetchOrders();
   }, [user]);
 
   const confirmCancelOrder = (order) => {
@@ -79,11 +58,9 @@ const MyOrders = () => {
 
   const handleCancelConfirmed = async () => {
     const orderId = selectedOrder.id;
-    const type = selectedOrder.type;
-    const collectionName = type === 'product' ? 'productOrders' : 'orders';
 
     try {
-      await deleteDoc(doc(db, collectionName, orderId));
+      await deleteDoc(doc(db, 'productOrders', orderId));
       setOrders(prev => prev.filter(order => order.id !== orderId));
       toast.success('Order cancelled successfully');
     } catch (err) {
@@ -124,22 +101,20 @@ const MyOrders = () => {
                 <tr key={order.id} className="border-t border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800">
                   <td className="p-3">
                     {order.image ? (
-                      <img src={order.image} alt={order.productName || order.serviceTitle || 'Order Image'} className="w-14 h-14 object-cover rounded-md" />
+                      <img src={order.image} alt={order.productName || 'Order Image'} className="w-14 h-14 object-cover rounded-md" />
                     ) : (
                       <div className="w-14 h-14 bg-gray-200 dark:bg-gray-600 flex items-center justify-center rounded-md text-gray-400 text-xs">📷</div>
                     )}
                   </td>
-                  <td className="p-3 font-medium">{order.serviceTitle || order.productName || 'Unnamed Order'}</td>
+                  <td className="p-3 font-medium">{order.productName || 'Unnamed Order'}</td>
                   <td className="p-3">
-                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${order.type === 'product' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'}`}>
-                      {order.type === 'product' ? 'Product' : 'Service'}
+                    <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                      Product
                     </span>
                   </td>
-                  <td className="p-3">₹{Number(order.price).toFixed(2)}</td>
+                  <td className="p-3">₹{Number(order.price || 0).toFixed(2)}</td>
                   <td className="p-3">
-                    {order.createdAt instanceof Object && typeof order.createdAt.toDate === 'function'
-                      ? order.createdAt.toDate().toLocaleString()
-                      : 'N/A'}
+                    {order.createdAt?.toDate ? order.createdAt.toDate().toLocaleString() : 'N/A'}
                   </td>
                   <td className="p-3">
                     <OrderStatusTracker status={order.status || 'Pending'} />
@@ -175,7 +150,7 @@ const MyOrders = () => {
         </div>
       )}
 
-      {/* ✅ Cancel Confirmation Modal */}
+      {/* Cancel Confirmation Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md">
@@ -183,7 +158,6 @@ const MyOrders = () => {
             <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
               Are you sure you want to cancel this order?
             </p>
-
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => {
