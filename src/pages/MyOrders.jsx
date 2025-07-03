@@ -11,8 +11,8 @@ import {
 } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
-import InvoiceButton from '../components/orders/InvoiceButton';
-import OrderStatusTracker from '../components/orders/OrderStatusTracker';
+import InvoiceButton from '../admin/InvoiceButton';
+import OrderStatusTracker from '../admin/OrderStatusTracker';
 // import ETABar from '../components/orders/ETABar';
 
 const MyOrders = () => {

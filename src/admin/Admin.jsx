@@ -40,7 +40,7 @@ const Admin = () => {
   const [digitalProducts, setDigitalProducts] = useState([]);
   const [shopOrders, setShopOrders] = useState([]);
   const [digitalOrders, setDigitalOrders] = useState([]);
-  const [serviceOrders, setServiceOrders] = useState([]);
+  // Removed serviceOrders state as per user request
   const [uploading, setUploading] = useState(false);
 
   const CLOUD_NAME = 'drzj15ztl';
@@ -57,8 +57,7 @@ const Admin = () => {
     const digiSnap = await getDocs(collection(db, 'products'));
     setDigitalProducts(digiSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 
-    const serviceSnap = await getDocs(collection(db, 'orders'));
-    setServiceOrders(serviceSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    // Removed service orders fetching as per user request
 
     const prodOrderSnap = await getDocs(collection(db, 'productOrders'));
     // Filter digital orders by type 'digital' if type field exists
@@ -72,9 +71,8 @@ const Admin = () => {
       const oSnap = await getDocs(collection(db, 'users', u.id, 'orders'));
       oSnap.forEach(o => allOrders.push({ ...o.data(), id: o.id, userId: u.id }));
     }
-    // Filter shop orders by type 'shop' if type field exists
-    const filteredShopOrders = allOrders.filter(order => order.type === 'shop');
-    setShopOrders(filteredShopOrders);
+    // Removed filtering by type for shop orders to include all orders from users' subcollections
+    setShopOrders(allOrders);
   };
 
   const uploadToCloudinary = async (file) => {
@@ -166,16 +164,32 @@ const Admin = () => {
     window.scrollTo(0, 0);
   };
 
-  const handleDelete = async (type, id) => {
-    await deleteDoc(doc(db, type, id));
-    toast.success('Deleted');
-    fetchAll();
+  const handleDelete = async (type, id, userId, nested) => {
+    try {
+      if (nested && userId) {
+        await deleteDoc(doc(db, type, userId, nested, id));
+      } else {
+        await deleteDoc(doc(db, type, id));
+      }
+      toast.success('Deleted');
+      fetchAll();
+    } catch (err) {
+      toast.error('Failed to delete');
+    }
   };
 
-  const handleComplete = async (type, id) => {
-    await updateDoc(doc(db, type, id), { status: 'completed' });
-    toast.success('Marked complete');
-    fetchAll();
+  const handleComplete = async (type, id, userId, nested) => {
+    try {
+      if (nested && userId) {
+        await updateDoc(doc(db, type, userId, nested, id), { status: 'completed' });
+      } else {
+        await updateDoc(doc(db, type, id), { status: 'completed' });
+      }
+      toast.success('Marked complete');
+      fetchAll();
+    } catch (err) {
+      toast.error('Failed to mark complete');
+    }
   };
 
   const tabs = [
@@ -184,7 +198,8 @@ const Admin = () => {
     { id: 'digitalItems', label: 'Digital Items' },
     { id: 'shopOrders', label: 'Shop Orders' },
     { id: 'digitalOrders', label: 'Digital Orders' },
-    { id: 'serviceOrders', label: 'Service Orders' },
+    // Removed serviceOrders tab as per user request
+    // { id: 'serviceOrders', label: 'Service Orders' },
   ];
 
   if (!isAdmin(user)) return <div className="text-center text-xl text-red-600 dark:text-red-400 py-20">🔒 Admins Only</div>;
@@ -258,18 +273,19 @@ const Admin = () => {
             <h2 className="text-xl font-bold">Shop Orders</h2>
            <Link to="/admin-orders" className="text-sm text-blue-500 underline">View All Orders</Link>
           </div>
-          <OrderGrid
-            orders={shopOrders}
-            type="users"
-            nested="orders"
-            onDelete={handleDelete}
-            onComplete={handleComplete}
-          />
+      <OrderGrid
+        orders={shopOrders}
+        type="users"
+        nested="orders"
+        onDelete={(type, id, userId) => handleDelete(type, id, userId, 'orders')}
+        onComplete={(type, id, userId) => handleComplete(type, id, userId, 'orders')}
+      />
         </>
       )}
 
       {tab === 'digitalOrders' && <OrderGrid orders={digitalOrders} type="productOrders" onDelete={handleDelete} onComplete={handleComplete} />}
-      {tab === 'serviceOrders' && <OrderGrid orders={serviceOrders} type="orders" onDelete={handleDelete} onComplete={handleComplete} />}
+    {/* Removed serviceOrders tab as per user request */}
+    {/* {tab === 'serviceOrders' && <OrderGrid orders={serviceOrders} type="orders" onDelete={handleDelete} onComplete={handleComplete} />} */}
     </div>
   );
 };
@@ -308,8 +324,8 @@ const OrderGrid = ({ orders, type, nested, onDelete, onComplete }) => (
         <p><strong>Status:</strong> {order.status}</p>
         <p><strong>Total:</strong> ₹{order.items?.reduce((sum, item) => sum + (item.price || 0), 0) || order.price || 0}</p>
         <div className="mt-3 flex gap-2">
-          <button onClick={() => onComplete(nested ? `${type}/${order.userId}/${nested}` : type, order.id)} className="flex-1 bg-green-600 text-white rounded py-1">Complete</button>
-          <button onClick={() => onDelete(nested ? `${type}/${order.userId}/${nested}` : type, order.id)} className="flex-1 bg-red-600 text-white rounded py-1">Delete</button>
+          <button onClick={() => onComplete(type, order.id, order.userId)} className="flex-1 bg-green-600 text-white rounded py-1">Complete</button>
+          <button onClick={() => onDelete(type, order.id, order.userId)} className="flex-1 bg-red-600 text-white rounded py-1">Delete</button>
         </div>
       </div>
     ))}
