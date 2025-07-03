@@ -13,7 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import InvoiceButton from '../components/orders/InvoiceButton';
 import OrderStatusTracker from '../components/orders/OrderStatusTracker';
-import ETABar from '../components/orders/ETABar';
+// import ETABar from '../components/orders/ETABar';
 
 const MyOrders = () => {
   const { user } = useAuth();
@@ -91,7 +91,7 @@ const MyOrders = () => {
                 <th className="p-3">Price</th>
                 <th className="p-3">Date</th>
                 <th className="p-3">Status</th>
-                <th className="p-3">ETA</th>
+                {/* <th className="p-3">ETA</th> */}
                 <th className="p-3">Invoice</th>
                 <th className="p-3">Action</th>
               </tr>
@@ -119,9 +119,9 @@ const MyOrders = () => {
                   <td className="p-3">
                     <OrderStatusTracker status={order.status || 'Pending'} />
                   </td>
-                  <td className="p-3">
+                  {/* <td className="p-3">
                     <ETABar createdAt={order.createdAt} deliveryDays={5} />
-                  </td>
+                  </td> */}
                   <td className="p-3">
                     <InvoiceButton order={order} />
                     <div id={`invoice-${order.id}`} className="hidden">

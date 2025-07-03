@@ -15,7 +15,7 @@ import { toast } from 'react-hot-toast';
 
 const Checkout = () => {
   const { user } = useAuth();
-  const { cart: contextCart, clearCart } = useCart();
+  const { cart: contextCart, clearCart, removeFromCart } = useCart();
   const navigate = useNavigate();
 
   const [addresses, setAddresses] = useState([]);
@@ -150,15 +150,17 @@ const Checkout = () => {
                 addDoc(collection(db, 'productOrders'), orderData),
                 addDoc(collection(db, 'orders'), {
                   ...orderData,
-                  type: 'product',
+                  type: 'shop',
                 })
               ]);
             });
 
             await Promise.all(saveOrders);
 
-            clearCart();
-            localStorage.removeItem('cart');
+            // Remove ordered items from cart
+            cart.forEach(item => {
+              removeFromCart(item.id);
+            });
             localStorage.removeItem('buyNowItem');
 
             toast.success('Payment successful! Redirecting...');

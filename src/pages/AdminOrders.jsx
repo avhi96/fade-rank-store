@@ -130,13 +130,32 @@ const AdminOrders = () => {
 
             <div className="mt-4 font-bold text-green-600">Total: ₹{selectedOrder.amount}</div>
 
-            <div className="mt-6 flex justify-between">
-              <button
-                onClick={() => handleComplete(selectedOrder)}
-                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+            <div className="mt-6 flex flex-col gap-4">
+              <label htmlFor="status" className="font-semibold mb-1">Update Order Status:</label>
+              <select
+                id="status"
+                value={selectedOrder.status || 'pending'}
+                onChange={async (e) => {
+                  const newStatus = e.target.value;
+                  try {
+                    await updateDoc(doc(db, 'users', selectedOrder.userId, 'orders', selectedOrder.id), {
+                      status: newStatus,
+                    });
+                    toast.success('Order status updated');
+                    setSelectedOrder(prev => ({ ...prev, status: newStatus }));
+                    fetchOrders();
+                  } catch (err) {
+                    toast.error('Failed to update order status');
+                  }
+                }}
+                className="w-full p-2 border border-gray-300 rounded"
               >
-                Mark as Complete
-              </button>
+                <option value="pending">Pending</option>
+                <option value="processing">Processing</option>
+                <option value="shipped">Shipped</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
               <button
                 onClick={() => handleDelete(selectedOrder)}
                 className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"

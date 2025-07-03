@@ -61,7 +61,10 @@ const Admin = () => {
     setServiceOrders(serviceSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 
     const prodOrderSnap = await getDocs(collection(db, 'productOrders'));
-    setDigitalOrders(prodOrderSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    // Filter digital orders by type 'digital' if type field exists
+    const digitalOrdersData = prodOrderSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const filteredDigitalOrders = digitalOrdersData.filter(order => order.type === 'digital');
+    setDigitalOrders(filteredDigitalOrders);
 
     const userSnap = await getDocs(collection(db, 'users'));
     let allOrders = [];
@@ -69,7 +72,9 @@ const Admin = () => {
       const oSnap = await getDocs(collection(db, 'users', u.id, 'orders'));
       oSnap.forEach(o => allOrders.push({ ...o.data(), id: o.id, userId: u.id }));
     }
-    setShopOrders(allOrders);
+    // Filter shop orders by type 'shop' if type field exists
+    const filteredShopOrders = allOrders.filter(order => order.type === 'shop');
+    setShopOrders(filteredShopOrders);
   };
 
   const uploadToCloudinary = async (file) => {

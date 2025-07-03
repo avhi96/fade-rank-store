@@ -87,7 +87,7 @@ export default function App() {
                 <Route path="/edit-profile" element={<PrivateRoute><EditProfile /></PrivateRoute>} />
                 <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
                 <Route path="/admin-orders" element={<AdminOrders />} />
-                <Route path="/thank-you" element={<ThankYou />} />
+                <Route path="/thankyou" element={<ThankYou />} />
 
                 <Route
                   path="/admin"
