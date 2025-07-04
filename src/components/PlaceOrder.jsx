@@ -16,7 +16,7 @@ const PlaceOrder = ({ productId, productName, price }) => {
     try {
       await addDoc(collection(db, 'productOrders'), {
         userId: user.uid,
-        userEmail: user.email,
+        userEmail: recipientEmail || user.email,
         userName: user.displayName || 'Anonymous',  // <-- Add this line
         productId,
         productName,

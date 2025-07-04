@@ -3,8 +3,8 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { isAdmin } from '../context/AuthContext';
 import {
-  FaHome, FaShoppingCart, FaBoxOpen, FaTags,
-  FaPhone, FaFileContract, FaUserCircle, FaTools,
+  FaHome, FaShoppingCart, FaBoxOpen,
+  FaPhone, FaUserCircle, FaTools,
   FaBars, FaTimes
 } from 'react-icons/fa';
 
@@ -18,7 +18,6 @@ const Sidebar = () => {
     { name: "Products", icon: <FaBoxOpen />, to: "/products" },
     // { name: "Services", icon: <FaTags />, to: "/services" },
     { name: "Contact", icon: <FaPhone />, to: "/contact" },
-    { name: "Terms", icon: <FaFileContract />, to: "/terms" },
   ];
 
   return (

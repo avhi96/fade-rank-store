@@ -8,6 +8,7 @@ import { db } from '../firebase';
 import { useAuth, isAdmin } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import { Link } from 'react-router-dom';
+import OrderStatusTracker from '../admin/OrderStatusTracker';
 
 const inputStyle = "w-full rounded border px-3 py-2 mb-2 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-black dark:text-white placeholder-gray-400";
 
@@ -40,6 +41,11 @@ const Admin = () => {
   const [digitalProducts, setDigitalProducts] = useState([]);
   const [shopOrders, setShopOrders] = useState([]);
   const [digitalOrders, setDigitalOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [errorOrders, setErrorOrders] = useState(null);
+  const [userMap, setUserMap] = useState({});
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
   // Removed serviceOrders state as per user request
   const [uploading, setUploading] = useState(false);
 
@@ -51,29 +57,63 @@ const Admin = () => {
   }, []);
 
   const fetchAll = async () => {
-    const shopSnap = await getDocs(collection(db, 'shopProducts'));
-    setShopProducts(shopSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    try {
+      setLoadingOrders(true);
+      setErrorOrders(null);
 
-    const digiSnap = await getDocs(collection(db, 'products'));
-    setDigitalProducts(digiSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const shopSnap = await getDocs(collection(db, 'shopProducts'));
+      setShopProducts(shopSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 
-    // Removed service orders fetching as per user request
+      const digiSnap = await getDocs(collection(db, 'products'));
+      setDigitalProducts(digiSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 
-    const prodOrderSnap = await getDocs(collection(db, 'productOrders'));
-    // Filter digital orders by type 'digital' if type field exists
-    const digitalOrdersData = prodOrderSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    const filteredDigitalOrders = digitalOrdersData.filter(order => order.type === 'digital');
-    setDigitalOrders(filteredDigitalOrders);
+      // Fetch users to create userId to username map
+      const userSnap = await getDocs(collection(db, 'users'));
+      const userMapTemp = {};
+      userSnap.docs.forEach(doc => {
+        const data = doc.data();
+        userMapTemp[doc.id] = data.username || data.email || 'Unknown';
+      });
+      setUserMap(userMapTemp);
 
-    const userSnap = await getDocs(collection(db, 'users'));
-    let allOrders = [];
-    for (const u of userSnap.docs) {
-      const oSnap = await getDocs(collection(db, 'users', u.id, 'orders'));
-      oSnap.forEach(o => allOrders.push({ ...o.data(), id: o.id, userId: u.id }));
+      const prodOrderSnap = await getDocs(collection(db, 'productOrders'));
+      const digitalOrdersData = prodOrderSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setDigitalOrders(digitalOrdersData);
+
+      // Fetch shop orders from root-level 'orders' collection
+      const shopOrderSnap = await getDocs(collection(db, 'orders'));
+      let shopOrdersData = shopOrderSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      // Enrich order items with product names from shopProducts and digitalProducts
+      shopOrdersData = shopOrdersData.map(order => {
+        if (order.items && Array.isArray(order.items)) {
+          const enrichedItems = order.items.map(item => {
+            // Try to find matching product in shopProducts or digitalProducts by id
+            const product = shopProducts.find(p => p.id === item.id);
+            const digitalProduct = digitalProducts.find(p => p.id === item.id);
+            return {
+              ...item,
+              name: item.name || product?.name || digitalProduct?.name || product?.title || digitalProduct?.title || 'Unnamed Item',
+              price: item.price || product?.price || digitalProduct?.price || 0,
+              quantity: item.quantity || 1,
+              type: product ? 'item' : digitalProduct ? 'product' : item.type || 'unknown',
+            };
+          });
+          return { ...order, items: enrichedItems };
+        }
+        return order;
+      });
+
+      setShopOrders(shopOrdersData);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      setErrorOrders('Failed to fetch orders');
+    } finally {
+      setLoadingOrders(false);
     }
-    // Removed filtering by type for shop orders to include all orders from users' subcollections
-    setShopOrders(allOrders);
   };
+
+
 
   const uploadToCloudinary = async (file) => {
     const data = new FormData();
@@ -85,6 +125,18 @@ const Admin = () => {
     });
     const json = await res.json();
     return json.secure_url;
+  };
+
+  // Modal close handler
+  const closeModal = () => {
+    setModalOpen(false);
+    setSelectedOrder(null);
+  };
+
+  // Modal open handler
+  const openModal = (order) => {
+    setSelectedOrder(order);
+    setModalOpen(true);
   };
 
   const handleSubmit = async (e) => {
@@ -167,7 +219,12 @@ const Admin = () => {
   const handleDelete = async (type, id, userId, nested) => {
     try {
       if (nested && userId) {
-        await deleteDoc(doc(db, type, userId, nested, id));
+        // For shop orders, delete from root-level 'orders' collection
+        if (type === 'users' || type === 'orders') {
+          await deleteDoc(doc(db, 'orders', id));
+        } else {
+          await deleteDoc(doc(db, type, userId, nested, id));
+        }
       } else {
         await deleteDoc(doc(db, type, id));
       }
@@ -180,7 +237,10 @@ const Admin = () => {
 
   const handleComplete = async (type, id, userId, nested) => {
     try {
-      if (nested && userId) {
+      // For shop orders, update status in root-level 'orders' collection
+      if (type === 'users' || type === 'orders') {
+        await updateDoc(doc(db, 'orders', id), { status: 'completed' });
+      } else if (nested && userId) {
         await updateDoc(doc(db, type, userId, nested, id), { status: 'completed' });
       } else {
         await updateDoc(doc(db, type, id), { status: 'completed' });
@@ -189,6 +249,22 @@ const Admin = () => {
       fetchAll();
     } catch (err) {
       toast.error('Failed to mark complete');
+    }
+  };
+
+  const handleStatusChange = async (type, id, userId, newStatus) => {
+    try {
+      // For shop orders, always update in root-level 'orders' collection
+      if (type === 'users' || type === 'orders') {
+        await updateDoc(doc(db, 'orders', id), { status: newStatus });
+      } else {
+        // For other types (e.g., digital orders), update in given collection
+        await updateDoc(doc(db, type, id), { status: newStatus });
+      }
+      toast.success(`Order status updated to ${newStatus}`);
+      fetchAll();
+    } catch (err) {
+      toast.error('Failed to update order status');
     }
   };
 
@@ -271,21 +347,77 @@ const Admin = () => {
         <>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold">Shop Orders</h2>
-           <Link to="/admin-orders" className="text-sm text-blue-500 underline">View All Orders</Link>
           </div>
-      <OrderGrid
-        orders={shopOrders}
-        type="users"
-        nested="orders"
-        onDelete={(type, id, userId) => handleDelete(type, id, userId, 'orders')}
-        onComplete={(type, id, userId) => handleComplete(type, id, userId, 'orders')}
-      />
+          {loadingOrders && <p>Loading orders...</p>}
+          {errorOrders && <p className="text-red-600">{errorOrders}</p>}
+          <OrderGrid
+            orders={shopOrders}
+            type="users"
+            nested="orders"
+            onDelete={(type, id, userId) => handleDelete(type, id, userId, 'orders')}
+            onComplete={(type, id, userId) => handleComplete(type, id, userId, 'orders')}
+            onStatusChange={handleStatusChange}
+            onOrderClick={openModal}
+            userMap={userMap}
+          />
         </>
       )}
 
-      {tab === 'digitalOrders' && <OrderGrid orders={digitalOrders} type="productOrders" onDelete={handleDelete} onComplete={handleComplete} />}
-    {/* Removed serviceOrders tab as per user request */}
-    {/* {tab === 'serviceOrders' && <OrderGrid orders={serviceOrders} type="orders" onDelete={handleDelete} onComplete={handleComplete} />} */}
+      {tab === 'digitalOrders' && <OrderGrid orders={digitalOrders} type="productOrders" onDelete={handleDelete} onComplete={handleComplete} onOrderClick={openModal} userMap={userMap} showUserEmail={true} />}
+      {/* Removed serviceOrders tab as per user request */}
+      {/* {tab === 'serviceOrders' && <OrderGrid orders={serviceOrders} type="orders" onDelete={handleDelete} onComplete={handleComplete} />} */}
+
+      {modalOpen && selectedOrder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg max-w-lg w-full max-h-[80vh] overflow-y-auto">
+            <h2 className="text-2xl font-bold mb-4">Order Details</h2>
+            <button onClick={closeModal} className="mb-4 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">Close</button>
+            <div className="space-y-2 text-sm">
+              <p><strong>Order ID:</strong> {selectedOrder.id}</p>
+              <p><strong>User:</strong> {userMap[selectedOrder.userId] || selectedOrder.userId || 'N/A'}</p>
+              <p><strong>User Email:</strong> {selectedOrder.userEmail || 'N/A'}</p>
+              <p><strong>Status:</strong> {selectedOrder.status || 'N/A'}</p>
+              <p><strong>Total Price:</strong> ₹{selectedOrder.items?.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 1), 0) || selectedOrder.price || 0}</p>
+              {selectedOrder.address && (
+                <div>
+                  <h3 className="font-semibold mt-2">Shipping Address:</h3>
+                  <p>{selectedOrder.address.name}</p>
+                  <p>{selectedOrder.address.addressLine}</p>
+                  <p>{selectedOrder.address.city}, {selectedOrder.address.state} - {selectedOrder.address.pincode}</p>
+                  <p>Phone: {selectedOrder.address.phone}</p>
+                </div>
+              )}
+            {selectedOrder.items && selectedOrder.items.length > 0 ? (
+              <div>
+                <h3 className="font-semibold mt-2">Items Ordered:</h3>
+                <div className="space-y-2 max-h-40 overflow-y-auto border p-2 rounded">
+                  {selectedOrder.items.map((item, index) => {
+                    const itemName = item.name || item.title || 'Unnamed Item';
+                    const itemQty = item.quantity || 1;
+                    const itemPrice = item.price || 0;
+                    return (
+                      <div key={index} className="flex justify-between border-b border-gray-300 dark:border-gray-700 pb-1">
+                        <div>
+                          <p className="font-semibold">{itemName}</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Qty: {itemQty}</p>
+                        </div>
+                        <div className="font-semibold">₹{itemPrice}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <p>No items found in this order.</p>
+            )}
+              {selectedOrder.createdAt && (
+                <p><strong>Order Date:</strong> {selectedOrder.createdAt.toDate ? selectedOrder.createdAt.toDate().toLocaleString() : new Date(selectedOrder.createdAt).toLocaleString()}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
@@ -315,21 +447,66 @@ const ProductGrid = ({ data, type, onDelete, onEdit }) => (
 );
 
 // Reusable OrderGrid Component
-const OrderGrid = ({ orders, type, nested, onDelete, onComplete }) => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-    {orders.map(order => (
-      <div key={order.id} className="bg-white dark:bg-gray-800 p-5 rounded shadow border">
-        <p><strong>Order ID:</strong> {order.id}</p>
-        <p><strong>User:</strong> {order.username || order.userId || 'Unknown'}</p>
-        <p><strong>Status:</strong> {order.status}</p>
-        <p><strong>Total:</strong> ₹{order.items?.reduce((sum, item) => sum + (item.price || 0), 0) || order.price || 0}</p>
-        <div className="mt-3 flex gap-2">
-          <button onClick={() => onComplete(type, order.id, order.userId)} className="flex-1 bg-green-600 text-white rounded py-1">Complete</button>
-          <button onClick={() => onDelete(type, order.id, order.userId)} className="flex-1 bg-red-600 text-white rounded py-1">Delete</button>
-        </div>
-      </div>
-    ))}
-  </div>
-);
+
+const OrderGrid = ({ orders, type, nested, onDelete, onComplete, onOrderClick, userMap, onStatusChange, showUserEmail }) => {
+  const [statusMap, setStatusMap] = React.useState({});
+
+  const handleSelectChange = (orderId, value) => {
+    setStatusMap(prev => ({ ...prev, [orderId]: value }));
+  };
+
+  const handleChangeClick = (orderId, userId) => {
+    if (statusMap[orderId]) {
+      onStatusChange(type, orderId, userId, statusMap[orderId]);
+    }
+  };
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      {orders.map(order => {
+        const itemNames = order.items && order.items.length > 0
+          ? order.items.map(item => item.name || item.title || 'Unnamed Item').join(', ')
+          : 'No items';
+        return (
+          <div key={order.id} onClick={() => onOrderClick && onOrderClick(order)} className="bg-white dark:bg-gray-800 p-5 rounded shadow border cursor-pointer">
+            <p><strong>Items:</strong> {itemNames}</p>
+            <p><strong>Authenticated User Email:</strong> {userMap && order.userId ? userMap[order.userId] || order.userId : 'Unknown'}</p>
+            <p><strong>Entered Email:</strong> {order.userEmail || 'N/A'}</p>
+            <OrderStatusTracker status={order.status || 'Pending'} />
+            <p><strong>Total:</strong> ₹{order.items?.reduce((sum, item) => sum + (item.price || 0), 0) || order.price || 0}</p>
+            <div className="mt-3 flex flex-col gap-2">
+              <select
+                value={statusMap[order.id] || order.status || 'Pending'}
+                onClick={e => e.stopPropagation()}
+                onChange={e => handleSelectChange(order.id, e.target.value)}
+                className="p-1 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-black dark:text-white"
+              >
+                <option value="Pending">Pending</option>
+                <option value="Processing">Processing</option>
+                <option value="Shipped">Shipped</option>
+                <option value="Completed">Completed</option>
+              </select>
+              <div className="flex gap-2">
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleChangeClick(order.id, order.userId); }}
+                  disabled={!statusMap[order.id] || statusMap[order.id] === order.status}
+                  className="flex-1 bg-blue-600 text-white rounded py-1 disabled:opacity-50"
+                >
+                  Change
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onDelete(type, order.id, order.userId); }}
+                  className="flex-1 bg-red-600 text-white rounded py-1"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 export default Admin;

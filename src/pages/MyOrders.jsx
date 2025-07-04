@@ -27,20 +27,50 @@ const MyOrders = () => {
 
     const fetchOrders = async () => {
       try {
-        const q = query(
+        // Fetch from users/{userId}/orders
+        const userOrdersQuery = query(
+          collection(db, 'users', user.uid, 'orders'),
+          orderBy('createdAt', 'desc')
+        );
+        const userOrdersSnapshot = await getDocs(userOrdersQuery);
+        const userOrders = userOrdersSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          type: 'item',
+        }));
+
+        // Fetch from productOrders collection
+        const productOrdersQuery = query(
           collection(db, 'productOrders'),
           where('userId', '==', user.uid),
           orderBy('createdAt', 'desc')
         );
-
-        const snapshot = await getDocs(q);
-        const fetchedOrders = snapshot.docs.map(doc => ({
+        const productOrdersSnapshot = await getDocs(productOrdersQuery);
+        const productOrders = productOrdersSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
-          type: 'product', // assuming all are product orders
+          type: 'product',
         }));
 
-        setOrders(fetchedOrders);
+        // Fetch from root-level 'orders' collection filtered by userId
+        const ordersQuery = query(
+          collection(db, 'orders'),
+          where('userId', '==', user.uid),
+          orderBy('createdAt', 'desc')
+        );
+        const ordersSnapshot = await getDocs(ordersQuery);
+        const rootOrders = ordersSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          type: 'item',
+        }));
+
+        // Merge all arrays
+        const allOrders = [...userOrders, ...productOrders, ...rootOrders];
+
+        console.log('Fetched Orders from both sources:', allOrders);
+
+        setOrders(allOrders);
       } catch (err) {
         toast.error(`Error loading orders: ${err.message}`);
       } finally {
@@ -60,7 +90,9 @@ const MyOrders = () => {
     const orderId = selectedOrder.id;
 
     try {
-      await deleteDoc(doc(db, 'productOrders', orderId));
+      // Delete from root-level 'orders' collection as well as user subcollection
+      await deleteDoc(doc(db, 'orders', orderId));
+      await deleteDoc(doc(db, 'users', user.uid, 'orders', orderId));
       setOrders(prev => prev.filter(order => order.id !== orderId));
       toast.success('Order cancelled successfully');
     } catch (err) {
@@ -100,21 +132,23 @@ const MyOrders = () => {
               {orders.map(order => (
                 <tr key={order.id} className="border-t border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800">
                   <td className="p-3">
-                    {order.image ? (
-                      <img src={order.image} alt={order.productName || 'Order Image'} className="w-14 h-14 object-cover rounded-md" />
-                    ) : (
-                      <div className="w-14 h-14 bg-gray-200 dark:bg-gray-600 flex items-center justify-center rounded-md text-gray-400 text-xs">📷</div>
-                    )}
+                  {(order.type === 'item' || order.type === 'shop') && order.image ? (
+                    <img src={order.image} alt={order.productName || 'Order Image'} className="w-14 h-14 object-cover rounded-md" />
+                  ) : (order.type === 'product' && order.items && order.items[0]?.images?.length > 0) ? (
+                    <img src={order.items[0].images[0]} alt={order.items[0].name || 'Product Image'} className="w-14 h-14 object-cover rounded-md" />
+                  ) : (
+                    <div className="w-14 h-14 bg-gray-200 dark:bg-gray-600 flex items-center justify-center rounded-md text-gray-400 text-xs">📷</div>
+                  )}
                   </td>
-                  <td className="p-3 font-medium">{order.productName || 'Unnamed Order'}</td>
+                  <td className="p-3 font-medium">{order.productName || order.items?.[0]?.name || 'Unnamed Order'}</td>
                   <td className="p-3">
                     <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
-                      Product
+                      {order.type === 'product' ? 'Product' : 'Item'}
                     </span>
                   </td>
                   <td className="p-3">₹{Number(order.price || 0).toFixed(2)}</td>
                   <td className="p-3">
-                    {order.createdAt?.toDate ? order.createdAt.toDate().toLocaleString() : 'N/A'}
+                    {order.createdAt && order.createdAt.toDate ? order.createdAt.toDate().toLocaleString() : 'N/A'}
                   </td>
                   <td className="p-3">
                     <OrderStatusTracker status={order.status || 'Pending'} />
@@ -124,24 +158,67 @@ const MyOrders = () => {
                   </td> */}
                   <td className="p-3">
                     <InvoiceButton order={order} />
-                    <div id={`invoice-${order.id}`} className="hidden">
-                      <h1>Invoice for {order.productName}</h1>
-                      <p>Price: ₹{order.price}</p>
-                      <p>Status: {order.status}</p>
-                      <p>Date: {order.createdAt?.toDate().toLocaleDateString()}</p>
+                    <div
+                      id={`invoice-${order.id}`}
+                      style={{
+                        position: 'absolute',
+                        left: '-9999px',
+                        top: '0',
+                        backgroundColor: 'white',
+                        color: 'black',
+                        padding: '1rem',
+                        width: '300px',
+                        zIndex: '-1',
+                      }}
+                    >
+                      <h1 className="text-xl font-bold mb-2">FADE INVOICE</h1>
+                      <p><strong>Invoice ID:</strong> #{order.id}</p>
+                      <p><strong>Order Date:</strong> {order.createdAt && order.createdAt.toDate ? order.createdAt.toDate().toLocaleString() : 'N/A'}</p>
+                      <p><strong>Customer:</strong> {user?.displayName || 'User'} ({user?.email})</p>
+                      <hr className="my-2" />
+                      <p><strong>Product:</strong> {order.productName}</p>
+                      <p><strong>Price:</strong> ₹{Number(order.price || 0).toFixed(2)}</p>
+                      <p><strong>Status:</strong> {order.status}</p>
+                      <p><strong>Order Type:</strong> {order.type}</p>
+                      {/* Optional fields */}
+                      <p><strong>Payment Method:</strong> UPI / Razorpay</p> 
+                      <p><strong>Delivery Address:</strong> {order.address ? (
+                        <>
+                          {order.address.addressLine}, {order.address.landmark && `${order.address.landmark}, `}
+                          {order.address.city}, {order.address.state} - {order.address.pincode}
+                        </>
+                      ) : 'N/A'}</p>
+                      <hr className="my-2" />
+                      <h2 className="font-semibold">Total: ₹{Number(order.price || 0).toFixed(2)}</h2>
+                      <p className="text-xs text-gray-500 mt-4">Thank you for your purchase!</p>
                     </div>
+
                   </td>
                   <td className="p-3">
-                    {order.status === 'completed' ? (
-                      <span className="text-green-600 font-semibold text-sm">Order Completed ✅</span>
-                    ) : (
-                      <button
-                        onClick={() => confirmCancelOrder(order)}
-                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 text-xs rounded"
-                      >
-                        Cancel ❌
-                      </button>
-                    )}
+                  {order.status === 'completed' ? (
+                    <button
+                      onClick={async () => {
+                        try {
+                          await deleteDoc(doc(db, 'orders', order.id));
+                          await deleteDoc(doc(db, 'users', user.uid, 'orders', order.id));
+                          setOrders(prev => prev.filter(o => o.id !== order.id));
+                          toast.success('Order deleted successfully');
+                        } catch (err) {
+                          toast.error('Failed to delete order.');
+                        }
+                      }}
+                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 text-xs rounded"
+                    >
+                      Delete 🗑️
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => confirmCancelOrder(order)}
+                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 text-xs rounded"
+                    >
+                      Cancel ❌
+                    </button>
+                  )}
                   </td>
                 </tr>
               ))}

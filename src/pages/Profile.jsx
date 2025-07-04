@@ -6,6 +6,7 @@ import {
   FaShoppingCart,
   FaBoxOpen,
   FaSignOutAlt,
+  FaFileContract,
 } from 'react-icons/fa';
 import { useDarkMode } from '../context/DarkModeContext';
 
@@ -35,6 +36,12 @@ const Profile = () => {
       label: 'Saved Addresses',
       action: () => navigate('/saved-addresses'),
     },
+    {
+      icon: <FaFileContract className="text-yellow-500" />, // You can change the icon
+      label: 'Terms & Conditions',
+      action: () => navigate('/terms'),
+    },
+
   ];
 
 

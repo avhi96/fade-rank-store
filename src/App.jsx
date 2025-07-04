@@ -19,7 +19,6 @@ import ForgotPassword from './pages/ForgetPassword';
 import PrivateRoute from './components/PrivateRoute';
 import Profile from './pages/Profile';
 import Admin from './admin/Admin';
-import AdminOrders from './admin/AdminOrders';
 import LikedItems from './pages/LikedItems';
 import SavedAddresses from './pages/SavedAddresses';
 import Cart from './pages/CartPage';
@@ -86,7 +85,6 @@ export default function App() {
                 <Route path="/checkout" element={<Checkout/>} />
                 <Route path="/edit-profile" element={<PrivateRoute><EditProfile /></PrivateRoute>} />
                 <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
-                <Route path="/admin-orders" element={<AdminOrders />} />
                 <Route path="/thankyou" element={<ThankYou />} />
 
                 <Route
