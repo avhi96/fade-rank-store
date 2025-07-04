@@ -94,7 +94,7 @@ const Shop = () => {
         {/* Show All Products Button */}
         <div className="text-center mt-12">
           <Link
-            to="/shop/all"
+            to="/all-shop-products"
             className="inline-block bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 transition"
           >
             View All Products

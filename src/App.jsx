@@ -69,7 +69,7 @@ export default function App() {
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/" element={<Home />} />
                 <Route path="/shop" element={<Shop />} />
-                <Route path="/shop/all" element={<AllShopProducts />} />
+                <Route path="/all-shop-products" element={<AllShopProducts />} />
                 <Route path="/item/:id" element={<ItemDetails />} />
                 <Route path="/shop/:slug" element={<CategoryPage />} />
                 <Route path="/products" element={<Products />} />

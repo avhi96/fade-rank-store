@@ -7,7 +7,8 @@ import { useCart } from '../context/cartContext'; // ✅ Import cart context
 
 const AllShopProducts = () => {
   const [products, setProducts] = useState([]);
-  const { cart, addToCart, removeFromCart } = useCart();
+  const [searchQuery, setSearchQuery] = useState('');
+  const { cart, addToCart } = useCart();
   const navigate = useNavigate();
 
   const totalPrice = cart.reduce((total, item) => {
@@ -36,8 +37,15 @@ const AllShopProducts = () => {
   }, []);
 
   const isInCart = (productId) => cart.some(item => item.id === productId);
-  removeFromCart(item.id);
 
+  // Filter products based on search query (name or id)
+  const filteredProducts = products.filter(product => {
+    const query = searchQuery.toLowerCase();
+    return (
+      product.name.toLowerCase().includes(query) ||
+      product.id.toLowerCase().includes(query)
+    );
+  });
 
   return (
     <div className="min-h-screen py-12 px-4 bg-white dark:bg-gray-900 relative">
@@ -52,15 +60,26 @@ const AllShopProducts = () => {
       </div>
 
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold text-center mb-12 text-gray-900 dark:text-white">
+        <h1 className="text-4xl font-bold text-center mb-6 text-gray-900 dark:text-white">
           All Store Products
         </h1>
 
-        {products.length === 0 ? (
-          <p className="text-center text-gray-500 dark:text-gray-400">No products available.</p>
+        {/* Search Box */}
+        <div className="mb-6 text-center">
+          <input
+            type="text"
+            placeholder="Search by name or ID"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-800 dark:text-white"
+          />
+        </div>
+
+        {filteredProducts.length === 0 ? (
+          <p className="text-center text-gray-500 dark:text-gray-400">No products found.</p>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            {products.map(product => {
+            {filteredProducts.map(product => {
               const imageUrl =
                 (Array.isArray(product.images) && product.images.length > 0 && product.images[0]) ||
                 product.image ||
