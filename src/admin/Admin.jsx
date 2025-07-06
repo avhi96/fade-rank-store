@@ -363,7 +363,21 @@ const Admin = () => {
         </>
       )}
 
-      {tab === 'digitalOrders' && <OrderGrid orders={digitalOrders} type="productOrders" onDelete={handleDelete} onComplete={handleComplete} onOrderClick={openModal} userMap={userMap} showUserEmail={true} />}
+      {tab === 'digitalOrders' && (
+        <>
+          <div className='flex justify-between items-center mb-4'>
+            <h2 className='text-xl font-bold'>Products Orders</h2>
+          </div>
+          <OrderGrid orders={digitalOrders}
+            type="productOrders"
+            onDelete={handleDelete}
+            onComplete={handleComplete}
+            onOrderClick={openModal}
+            userMap={userMap}
+            showUserEmail={true}
+          />
+        </>
+      )}
       {/* Removed serviceOrders tab as per user request */}
       {/* {tab === 'serviceOrders' && <OrderGrid orders={serviceOrders} type="orders" onDelete={handleDelete} onComplete={handleComplete} />} */}
 
@@ -387,29 +401,29 @@ const Admin = () => {
                   <p>Phone: {selectedOrder.address.phone}</p>
                 </div>
               )}
-            {selectedOrder.items && selectedOrder.items.length > 0 ? (
-              <div>
-                <h3 className="font-semibold mt-2">Items Ordered:</h3>
-                <div className="space-y-2 max-h-40 overflow-y-auto border p-2 rounded">
-                  {selectedOrder.items.map((item, index) => {
-                    const itemName = item.name || item.title || 'Unnamed Item';
-                    const itemQty = item.quantity || 1;
-                    const itemPrice = item.price || 0;
-                    return (
-                      <div key={index} className="flex justify-between border-b border-gray-300 dark:border-gray-700 pb-1">
-                        <div>
-                          <p className="font-semibold">{itemName}</p>
-                          <p className="text-xs text-gray-600 dark:text-gray-400">Qty: {itemQty}</p>
+              {selectedOrder.items && selectedOrder.items.length > 0 ? (
+                <div>
+                  <h3 className="font-semibold mt-2">Items Ordered:</h3>
+                  <div className="space-y-2 max-h-40 overflow-y-auto border p-2 rounded">
+                    {selectedOrder.items.map((item, index) => {
+                      const itemName = item.name || item.title || 'Unnamed Item';
+                      const itemQty = item.quantity || 1;
+                      const itemPrice = item.price || 0;
+                      return (
+                        <div key={index} className="flex justify-between border-b border-gray-300 dark:border-gray-700 pb-1">
+                          <div>
+                            <p className="font-semibold">{itemName}</p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">Qty: {itemQty}</p>
+                          </div>
+                          <div className="font-semibold">₹{itemPrice}</div>
                         </div>
-                        <div className="font-semibold">₹{itemPrice}</div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <p>No items found in this order.</p>
-            )}
+              ) : (
+                <p>No items found in this order.</p>
+              )}
               {selectedOrder.createdAt && (
                 <p><strong>Order Date:</strong> {selectedOrder.createdAt.toDate ? selectedOrder.createdAt.toDate().toLocaleString() : new Date(selectedOrder.createdAt).toLocaleString()}</p>
               )}

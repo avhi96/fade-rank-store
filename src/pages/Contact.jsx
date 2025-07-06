@@ -130,7 +130,7 @@ const Contact = () => {
 
             {/* Owner Info */}
             <p className="mt-4 text-sm text-gray-500 dark:text-gray-400 text-center">
-              This website is managed by <strong>Sumit Kumar</strong>. We’re here to help you!
+              {/* This website is managed by <strong>Sumit Kumar</strong>. We’re here to help you! */}
             </p>
           </div>
         </div>
@@ -142,14 +142,14 @@ const Contact = () => {
             <SocialIcon href="https://www.facebook.com/profile.php?id=61577757806514" Icon={FaFacebookF} color="blue" name="Facebook" />
             <SocialIcon href="https://www.youtube.com/@FadeNetwork013" Icon={FaYoutube} color="red" name="YouTube" />
           </div>
-
-          {/* Contact Owner Info */}
+{/* 
+          Contact Owner Info
           <div className="mt-6 text-sm text-gray-600 dark:text-gray-400">
             <p><strong>Owner:</strong> Sumit Kumar</p>
             <p><strong>Email:</strong> <a href="mailto:support@fade013.store" className="text-blue-600 dark:text-blue-400">support@fade013.store</a></p>
             <p><strong>Phone:</strong> <a href="tel:+9198789785951" className="text-blue-600 dark:text-blue-400">+91 87897 85951</a></p>
             <p><strong>Address:</strong> 028 Raj Colony, near ITI, Sunam, Punjab, India</p>
-          </div>
+          </div> */}
 
 
           <p className="text-gray-500 dark:text-gray-400 mt-4 text-sm">© 2025 Fade. All rights reserved.</p>

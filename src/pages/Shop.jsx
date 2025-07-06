@@ -69,7 +69,7 @@ const Shop = () => {
         {cart.length > 0 ? `₹${totalPrice.toFixed(0)}` : 'Cart Empty'}
       </div>
 
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mt-6 mx-auto">
         <h1 className="text-4xl font-bold text-center mb-12 text-gray-900 dark:text-white">
           Categories
         </h1>
