@@ -6,12 +6,11 @@ import {
   FaShoppingCart,
   FaBoxOpen,
   FaSignOutAlt,
-  FaFileContract,
 } from 'react-icons/fa';
 import { useDarkMode } from '../context/DarkModeContext';
 
 const Profile = () => {
-  const { user, logout } = useAuth(); // ✅ use inside the component only
+  const { user, logout } = useAuth();
   const { darkMode, setDarkMode } = useDarkMode();
   const navigate = useNavigate();
 
@@ -21,11 +20,11 @@ const Profile = () => {
       label: 'Liked Items',
       action: () => navigate('/liked'),
     },
-    {
-      icon: <FaShoppingCart className="text-blue-500" />,
-      label: 'My Cart',
-      action: () => navigate('/cart'),
-    },
+    // {
+    //   icon: <FaShoppingCart className="text-blue-500" />,
+    //   label: 'My Cart',
+    //   action: () => navigate('/cart'),
+    // },
     {
       icon: <FaBoxOpen className="text-green-600" />,
       label: 'My Orders',
@@ -36,14 +35,7 @@ const Profile = () => {
       label: 'Saved Addresses',
       action: () => navigate('/saved-addresses'),
     },
-    {
-      icon: <FaFileContract className="text-yellow-500" />, // You can change the icon
-      label: 'Terms & Conditions',
-      action: () => navigate('/terms'),
-    },
-
   ];
-
 
   if (!user) {
     return (
@@ -59,7 +51,6 @@ const Profile = () => {
 
       {/* User Info Card */}
       <div className="bg-white dark:bg-gray-800 shadow-md rounded-xl p-6 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 text-center sm:text-left">
-        {/* Centered Avatar */}
         <div className="flex justify-center sm:justify-start w-full sm:w-auto">
           <img
             src={user.photoURL || '/default-avatar.png'}
@@ -67,8 +58,6 @@ const Profile = () => {
             className="w-20 h-20 rounded-full object-cover border-2 border-blue-600"
           />
         </div>
-
-        {/* User Info */}
         <div className="flex-1">
           <p className="text-lg font-semibold">
             {user.displayName || user.username || user.email}
@@ -77,8 +66,6 @@ const Profile = () => {
             {user.email}
           </p>
         </div>
-
-        {/* Edit Button */}
         <div className="mt-4 sm:mt-0 sm:ml-auto">
           <button
             onClick={() => navigate('/edit-profile')}
@@ -88,7 +75,6 @@ const Profile = () => {
           </button>
         </div>
       </div>
-
 
       {/* Profile Options */}
       <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -110,12 +96,10 @@ const Profile = () => {
           </span>
           <button
             onClick={() => setDarkMode((prev) => !prev)}
-            className={`w-14 h-7 flex items-center rounded-full p-1 transition duration-300 ${darkMode ? 'bg-gray-800' : 'bg-gray-300'
-              }`}
+            className={`w-14 h-7 flex items-center rounded-full p-1 transition duration-300 ${darkMode ? 'bg-gray-800' : 'bg-gray-300'}`}
           >
             <div
-              className={`w-5 h-5 bg-white rounded-full shadow-md transform transition duration-300 ${darkMode ? 'translate-x-7' : 'translate-x-0'
-                }`}
+              className={`w-5 h-5 bg-white rounded-full shadow-md transform transition duration-300 ${darkMode ? 'translate-x-7' : 'translate-x-0'}`}
             />
           </button>
         </div>
@@ -130,6 +114,22 @@ const Profile = () => {
           <FaSignOutAlt />
           Logout
         </button>
+
+      {/* Footer Links */}
+      <div className="mt-10 flex justify-center flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400">
+        <button onClick={() => navigate('/terms-policy')} className="hover:underline">
+          Terms of Service
+        </button>|
+        <button onClick={() => navigate('/privacy-policy')} className="hover:underline">
+          Privacy Policy
+        </button>|
+        <button onClick={() => navigate('/refund-policy')} className="hover:underline">
+          Refund Policy
+        </button>|
+        <button onClick={() => navigate('/shipping-policy')} className="hover:underline">
+          Shipping And Delivery Policy
+        </button>
+      </div>
       </div>
     </div>
   );

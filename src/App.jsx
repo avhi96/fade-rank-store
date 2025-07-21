@@ -12,7 +12,7 @@ import CategoryPage from './pages/CategoryPage';
 import Products from './pages/Products';
 // import Services from './pages/Services';
 import Contact from './pages/Contact';
-import Terms from './pages/Terms';
+import Terms from './pages/Terms/Terms';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import ForgotPassword from './pages/ForgetPassword';
@@ -30,6 +30,9 @@ import AllProducts from './pages/AllProducts';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import ThankYou from './pages/ThankYou';
+import Refund from './pages/Terms/RefundPolicy'
+import Privacy from './pages/Terms/PrivacyPolicy';
+import ShippingPolicy from './pages/Terms/shipping';
 
 
 export default function App() {
@@ -77,7 +80,10 @@ export default function App() {
                 <Route path="/products/all" element={<AllProducts />} />
                 {/* <Route path="/services" element={<Services />} /> */}
                 <Route path="/contact" element={<Contact />} />
-                <Route path="/terms" element={<Terms />} />
+                <Route path="/terms-policy" element={<Terms />} />
+                <Route path="/refund-policy" element={<Refund />} />
+                <Route path="/privacy-policy" element={<Privacy />} />
+                <Route path="/shipping-policy" element={<ShippingPolicy />} />
                 <Route path="/liked" element={<LikedItems />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/saved-addresses" element={<SavedAddresses />} />
