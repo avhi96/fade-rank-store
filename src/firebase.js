@@ -8,7 +8,8 @@ const firebaseConfig = {
   projectId: "fademart-32de5",
   storageBucket: "fademart-32de5.firebasestorage.app",
   messagingSenderId: "755726899118",
-  appId: "1:755726899118:web:b49445f6bd31953f5e1a3f"
+  appId: "1:755726899118:web:b49445f6bd31953f5e1a3f",
+  measurementId: "G-N7S58YEDTH"
 };
 
 
