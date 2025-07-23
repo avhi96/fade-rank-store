@@ -144,7 +144,7 @@ const Contact = () => {
           </div>
 
           <div className="mt-6 text-sm text-gray-600 dark:text-gray-400">
-          Contact Owner Info
+          {/* Contact Owner Info */}
             <p><strong>Owner:</strong> Sumit Kumar</p>
             {/* <p><strong>Owner Email:</strong> <a href="mailto:fade@mail.io" className="text-blue-600 dark:text-blue-400">fade@mail.io</a></p> */}
             <p><strong>Support Email:</strong> <a href="mailto:fade013@mail.io" className="text-blue-600 dark:text-blue-400">fade013@mail.io</a></p>
