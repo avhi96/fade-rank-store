@@ -120,7 +120,7 @@ const Checkout = () => {
       const orderData = await res.json();
 
       const options = {
-        key: 'rzp_live_0017VANdScBR7u',
+        key: 'rzp_live_AY41K4JkiHKQFr',
         amount: orderData.amount,
         currency: orderData.currency,
         name: 'Fade Network',
