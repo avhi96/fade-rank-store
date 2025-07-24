@@ -115,13 +115,13 @@ const Checkout = () => {
       const res = await fetch('https://fadebackend.onrender.com/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: total }),
+        body: JSON.stringify({ amount: Math.round(total * 100) }),
       });
 
       const orderData = await res.json();
 
       const options = {
-        key: 'rzp_live_AY41K4JkiHKQFr',
+        key: 'rzp_test_5t3Z8HDiqwvOwy',
         amount: orderData.amount,
         currency: orderData.currency,
         name: 'Fade Network',
