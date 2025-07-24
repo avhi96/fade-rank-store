@@ -92,9 +92,10 @@ const Checkout = () => {
 
   const selectedAddress = addresses.find(addr => addr.id === selectedAddressId);
   const total = cart.reduce(
-    (acc, item) => acc + getFinalPrice(item.price, item.discount || 0),
+    (acc, item) => acc + getFinalPrice(item.price, item.discount || 0) * (item.quantity || 1),
     0
   );
+
 
   // Razorpay script
   useEffect(() => {
