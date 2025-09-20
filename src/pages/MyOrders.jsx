@@ -84,43 +84,9 @@ const MyOrders = () => {
           type: 'item',
         }));
 
-        // Merge all arrays and add sample data for demonstration
+        // Merge all arrays - no sample data
         const allOrders = [...userOrders, ...productOrders, ...rootOrders];
-        
-        // Add sample orders if no orders exist (for demonstration)
-        if (allOrders.length === 0) {
-          const sampleOrders = [
-            {
-              id: 'sample-1',
-              productName: 'VIP Rank',
-              price: 999,
-              status: 'completed',
-              type: 'product',
-              assignedCode: 'VIP-RANK-2024-ABC123',
-              createdAt: { toDate: () => new Date(Date.now() - 86400000) }, // 1 day ago
-            },
-            {
-              id: 'sample-2',
-              productName: 'Premium Rank',
-              price: 1499,
-              status: 'completed',
-              type: 'product',
-              assignedCode: 'PREMIUM-RANK-2024-XYZ789',
-              createdAt: { toDate: () => new Date(Date.now() - 172800000) }, // 2 days ago
-            },
-            {
-              id: 'sample-3',
-              productName: 'Elite Rank',
-              price: 2499,
-              status: 'processing',
-              type: 'product',
-              createdAt: { toDate: () => new Date(Date.now() - 3600000) }, // 1 hour ago
-            }
-          ];
-          setOrders(sampleOrders);
-        } else {
-          setOrders(allOrders);
-        }
+        setOrders(allOrders);
       } catch (err) {
         console.error('Error fetching orders:', err);
         toast.error(`Error loading orders: ${err.message}`);
@@ -225,10 +191,8 @@ Visit us again for more Minecraft ranks!
     const orderId = selectedOrder.id;
 
     try {
-      if (!orderId.startsWith('sample-')) {
-        await deleteDoc(doc(db, 'orders', orderId));
-        await deleteDoc(doc(db, 'users', user.uid, 'orders', orderId));
-      }
+      await deleteDoc(doc(db, 'orders', orderId));
+      await deleteDoc(doc(db, 'users', user.uid, 'orders', orderId));
       setOrders(prev => prev.filter(order => order.id !== orderId));
       toast.success('Order cancelled successfully');
     } catch (err) {
@@ -477,10 +441,8 @@ Visit us again for more Minecraft ranks!
                           <button
                             onClick={async () => {
                               try {
-                                if (!order.id.startsWith('sample-')) {
-                                  await deleteDoc(doc(db, 'orders', order.id));
-                                  await deleteDoc(doc(db, 'users', user.uid, 'orders', order.id));
-                                }
+                                await deleteDoc(doc(db, 'orders', order.id));
+                                await deleteDoc(doc(db, 'users', user.uid, 'orders', order.id));
                                 setOrders(prev => prev.filter(o => o.id !== order.id));
                                 toast.success('Order deleted successfully');
                               } catch (err) {
