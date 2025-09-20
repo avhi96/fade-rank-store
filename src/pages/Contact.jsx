@@ -44,7 +44,7 @@ const Contact = () => {
       });
 
       // Send to Discord webhook
-      const webhookUrl = 'https://discordapp.com/api/webhooks/1418606148797464767/ifUqOdiHqJqmIq_T1gQxiFsvVq4KcVCECEfYTLkcr1aRtDDmXAyC03gYJzn1ZBD4b_n1';
+      const webhookUrl = import.meta.env.DISCORD_WEBHOOK_CONTACT;
       
       const discordEmbed = {
         embeds: [{
