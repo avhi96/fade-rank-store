@@ -1,524 +1,1255 @@
-// 🛠️ Admin.jsx (Final Full Version)
 import React, { useEffect, useState } from 'react';
 import {
-  collection, getDocs, addDoc, deleteDoc, updateDoc,
-  doc, serverTimestamp
+  collection, getDocs, updateDoc, doc, deleteDoc, addDoc, serverTimestamp
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth, isAdmin } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
-import { Link } from 'react-router-dom';
-import OrderStatusTracker from '../admin/OrderStatusTracker';
-
-const inputStyle = "w-full rounded border px-3 py-2 mb-2 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-black dark:text-white placeholder-gray-400";
-
-const shopCategories = [
-  { label: 'Anime Accessories', value: 'accessories' },
-  { label: 'Wall Decor', value: 'wall-decor' },
-  { label: 'Desk & Tech Gear', value: 'tech-gear' },
-  { label: 'Anime Figurines', value: 'figurines' },
-  { label: 'Stickers & Decals', value: 'stickers' },
-  { label: 'Costumes & Wearables', value: 'cosplay' },
-];
+import { 
+  FaUsers, FaShoppingCart, FaEye, FaTrash, FaEdit, 
+  FaSearch, FaFilter, FaCrown, FaGem,
+  FaChartLine, FaDollarSign, FaCalendarAlt, FaEnvelope,
+  FaStar, FaFire, FaBolt, FaLock, FaPlus, FaSave
+} from 'react-icons/fa';
 
 const Admin = () => {
   const { user } = useAuth();
-  const [tab, setTab] = useState('addProduct');
-  const [form, setForm] = useState({
+  const [activeTab, setActiveTab] = useState('purchases');
+  const [purchases, setPurchases] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [customRanks, setCustomRanks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedPurchase, setSelectedPurchase] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [stats, setStats] = useState({
+    totalPurchases: 0,
+    totalRevenue: 0,
+    pendingOrders: 0,
+    completedOrders: 0
+  });
+
+  // Form state for adding new ranks
+  const [rankForm, setRankForm] = useState({
     name: '',
     description: '',
     price: '',
+    originalPrice: '',
     discount: '',
-    imageURLs: '',
-    type: 'shop',
-    demoUrl: '',
-    category: '',
+    icon: 'crown',
+    color: 'from-blue-400 to-purple-500',
+    features: ['', '', '', ''],
+    popular: false
   });
-  const [files, setFiles] = useState([]);
-  const [existingImages, setExistingImages] = useState([]);
-  const [editingId, setEditingId] = useState(null);
-  const [shopProducts, setShopProducts] = useState([]);
-  const [digitalProducts, setDigitalProducts] = useState([]);
-  const [shopOrders, setShopOrders] = useState([]);
-  const [digitalOrders, setDigitalOrders] = useState([]);
-  const [loadingOrders, setLoadingOrders] = useState(false);
-  const [errorOrders, setErrorOrders] = useState(null);
-  const [userMap, setUserMap] = useState({});
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  // Removed serviceOrders state as per user request
-  const [uploading, setUploading] = useState(false);
+  const [editingRank, setEditingRank] = useState(null);
 
-  const CLOUD_NAME = 'drzj15ztl';
-  const UPLOAD_PRESET = 'fademart_unsigned';
+  // Code management state
+  const [rankCodes, setRankCodes] = useState([]);
+  const [selectedRankForCodes, setSelectedRankForCodes] = useState('');
+  const [newCodes, setNewCodes] = useState('');
+  const [codesLoading, setCodesLoading] = useState(false);
+
+  const tabs = [
+    { id: 'purchases', label: 'User Purchases', icon: FaShoppingCart },
+    { id: 'addRank', label: 'Add Discord Rank', icon: FaPlus },
+    { id: 'manageRanks', label: 'Manage Ranks', icon: FaCrown },
+    { id: 'manageCodes', label: 'Manage Codes', icon: FaLock }
+  ];
+
+  const iconOptions = [
+    { value: 'crown', label: 'Crown', icon: FaCrown },
+    { value: 'gem', label: 'Gem', icon: FaGem },
+    { value: 'star', label: 'Star', icon: FaStar },
+    { value: 'fire', label: 'Fire', icon: FaFire },
+    { value: 'bolt', label: 'Bolt', icon: FaBolt },
+    { value: 'lock', label: 'Lock', icon: FaLock }
+  ];
+
+  const colorOptions = [
+    { value: 'from-yellow-400 to-orange-500', label: 'Gold', preview: 'bg-gradient-to-r from-yellow-400 to-orange-500' },
+    { value: 'from-purple-400 to-pink-500', label: 'Purple', preview: 'bg-gradient-to-r from-purple-400 to-pink-500' },
+    { value: 'from-blue-400 to-cyan-500', label: 'Blue', preview: 'bg-gradient-to-r from-blue-400 to-cyan-500' },
+    { value: 'from-red-400 to-orange-500', label: 'Red', preview: 'bg-gradient-to-r from-red-400 to-orange-500' },
+    { value: 'from-green-400 to-emerald-500', label: 'Green', preview: 'bg-gradient-to-r from-green-400 to-emerald-500' },
+    { value: 'from-indigo-400 to-purple-500', label: 'Indigo', preview: 'bg-gradient-to-r from-indigo-400 to-purple-500' }
+  ];
 
   useEffect(() => {
-    fetchAll();
-  }, []);
+    if (isAdmin(user)) {
+      fetchAllData();
+    }
+  }, [user]);
 
-  const fetchAll = async () => {
+  const fetchAllData = async () => {
     try {
-      setLoadingOrders(true);
-      setErrorOrders(null);
-
-      const shopSnap = await getDocs(collection(db, 'shopProducts'));
-      setShopProducts(shopSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-
-      const digiSnap = await getDocs(collection(db, 'products'));
-      setDigitalProducts(digiSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-
-      // Fetch users to create userId to username map
-      const userSnap = await getDocs(collection(db, 'users'));
-      const userMapTemp = {};
-      userSnap.docs.forEach(doc => {
-        const data = doc.data();
-        userMapTemp[doc.id] = data.username || data.email || 'Unknown';
+      setLoading(true);
+      
+      // Fetch users
+      const usersSnap = await getDocs(collection(db, 'users'));
+      const usersData = {};
+      usersSnap.docs.forEach(doc => {
+        const userData = doc.data();
+        usersData[doc.id] = {
+          id: doc.id,
+          username: userData.username || 'Unknown',
+          email: userData.email || 'No email',
+          displayName: userData.displayName || userData.username || 'Unknown User'
+        };
       });
-      setUserMap(userMapTemp);
+      setUsers(usersData);
 
-      const prodOrderSnap = await getDocs(collection(db, 'productOrders'));
-      const digitalOrdersData = prodOrderSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setDigitalOrders(digitalOrdersData);
+      // Fetch custom ranks
+      const ranksSnap = await getDocs(collection(db, 'products'));
+      const ranksData = ranksSnap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setCustomRanks(ranksData);
 
-      // Fetch shop orders from root-level 'orders' collection
-      const shopOrderSnap = await getDocs(collection(db, 'orders'));
-      let shopOrdersData = shopOrderSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // Fetch rank codes
+      const codesSnap = await getDocs(collection(db, 'rankCodes'));
+      const codesData = codesSnap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setRankCodes(codesData);
 
-      // Enrich order items with product names from shopProducts and digitalProducts
-      shopOrdersData = shopOrdersData.map(order => {
-        if (order.items && Array.isArray(order.items)) {
-          const enrichedItems = order.items.map(item => {
-            // Try to find matching product in shopProducts or digitalProducts by id
-            const product = shopProducts.find(p => p.id === item.id);
-            const digitalProduct = digitalProducts.find(p => p.id === item.id);
-            return {
-              ...item,
-              name: item.name || product?.name || digitalProduct?.name || product?.title || digitalProduct?.title || 'Unnamed Item',
-              price: item.price || product?.price || digitalProduct?.price || 0,
-              quantity: item.quantity || 1,
-              type: product ? 'item' : digitalProduct ? 'product' : item.type || 'unknown',
-            };
-          });
-          return { ...order, items: enrichedItems };
-        }
-        return order;
+      // Fetch all purchases
+      const allPurchases = [];
+
+      // Fetch shop orders
+      const shopOrdersSnap = await getDocs(collection(db, 'orders'));
+      shopOrdersSnap.docs.forEach(doc => {
+        const orderData = doc.data();
+        allPurchases.push({
+          id: doc.id,
+          type: 'Shop Order',
+          userId: orderData.userId,
+          userEmail: orderData.userEmail || 'Not provided',
+          items: orderData.items || [],
+          totalAmount: orderData.items?.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0,
+          status: orderData.status || 'Pending',
+          createdAt: orderData.createdAt,
+          address: orderData.address,
+          paymentMethod: orderData.paymentMethod || 'Not specified'
+        });
       });
 
-      setShopOrders(shopOrdersData);
+      // Fetch digital product orders
+      const digitalOrdersSnap = await getDocs(collection(db, 'productOrders'));
+      digitalOrdersSnap.docs.forEach(doc => {
+        const orderData = doc.data();
+        allPurchases.push({
+          id: doc.id,
+          type: 'Discord Rank',
+          userId: orderData.userId,
+          userEmail: orderData.userEmail || orderData.email || 'Not provided',
+          items: [{
+            name: orderData.productName || orderData.name || 'Discord Rank',
+            price: orderData.price || 0,
+            quantity: 1
+          }],
+          totalAmount: orderData.price || 0,
+          status: orderData.status || 'Pending',
+          createdAt: orderData.createdAt,
+          discordUsername: orderData.discordUsername || 'Not provided',
+          assignedCode: orderData.assignedCode || null
+        });
+      });
+
+      // Sort by creation date (newest first)
+      allPurchases.sort((a, b) => {
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+        return dateB - dateA;
+      });
+
+      setPurchases(allPurchases);
+
+      // Calculate stats
+      const totalRevenue = allPurchases.reduce((sum, purchase) => sum + purchase.totalAmount, 0);
+      const pendingOrders = allPurchases.filter(p => p.status === 'Pending').length;
+      const completedOrders = allPurchases.filter(p => p.status === 'Completed').length;
+
+      setStats({
+        totalPurchases: allPurchases.length,
+        totalRevenue,
+        pendingOrders,
+        completedOrders
+      });
+
     } catch (error) {
-      console.error('Error fetching orders:', error);
-      setErrorOrders('Failed to fetch orders');
+      console.error('Error fetching data:', error);
+      toast.error('Failed to fetch data');
     } finally {
-      setLoadingOrders(false);
+      setLoading(false);
     }
   };
 
-
-
-  const uploadToCloudinary = async (file) => {
-    const data = new FormData();
-    data.append('file', file);
-    data.append('upload_preset', UPLOAD_PRESET);
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-      method: 'POST',
-      body: data
-    });
-    const json = await res.json();
-    return json.secure_url;
+  const handleRankFormChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setRankForm(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
   };
 
-  // Modal close handler
-  const closeModal = () => {
-    setModalOpen(false);
-    setSelectedOrder(null);
+  const handleFeatureChange = (index, value) => {
+    const newFeatures = [...rankForm.features];
+    newFeatures[index] = value;
+    setRankForm(prev => ({
+      ...prev,
+      features: newFeatures
+    }));
   };
 
-  // Modal open handler
-  const openModal = (order) => {
-    setSelectedOrder(order);
-    setModalOpen(true);
-  };
-
-  const handleSubmit = async (e) => {
+  const handleAddRank = async (e) => {
     e.preventDefault();
-    setUploading(true);
     try {
-      let uploaded = [...existingImages];
-      if (files.length > 0) {
-        for (const file of files) {
-          const url = await uploadToCloudinary(file);
-          uploaded.push(url);
-        }
-      }
-
-      if (form.imageURLs.trim()) {
-        const urls = form.imageURLs.split(/[\n,]+/).map(u => u.trim()).filter(Boolean);
-        uploaded.push(...urls);
-      }
-
-      if (uploaded.length === 0) throw new Error('At least one image is required.');
-
-      const data = {
-        name: form.name,
-        price: Number(form.price),
-        discount: form.discount ? Number(form.discount) : 0,
-        images: uploaded,
-        description: form.description,
-        demoUrl: form.demoUrl || '',
+      const rankData = {
+        name: rankForm.name,
+        description: rankForm.description,
+        price: Number(rankForm.price),
+        originalPrice: rankForm.originalPrice ? Number(rankForm.originalPrice) : Number(rankForm.price),
+        discount: rankForm.discount ? Number(rankForm.discount) : 0,
+        icon: rankForm.icon,
+        color: rankForm.color,
+        features: rankForm.features.filter(f => f.trim() !== ''),
+        popular: rankForm.popular,
         createdAt: serverTimestamp(),
+        createdBy: user.uid
       };
 
-      const target = form.type === 'shop' ? 'shopProducts' : 'products';
-      if (form.type === 'shop') data.category = form.category || '';
-
-      if (editingId) {
-        await updateDoc(doc(db, target, editingId), data);
-        toast.success('Product updated');
-        setEditingId(null);
+      if (editingRank) {
+        await updateDoc(doc(db, 'products', editingRank), rankData);
+        toast.success('Rank updated successfully!');
+        setEditingRank(null);
       } else {
-        await addDoc(collection(db, target), data);
-        toast.success('Product added');
+        await addDoc(collection(db, 'products'), rankData);
+        toast.success('New Discord rank added successfully!');
       }
 
-      setForm({
+      // Reset form
+      setRankForm({
         name: '',
         description: '',
         price: '',
+        originalPrice: '',
         discount: '',
-        imageURLs: '',
-        type: 'shop',
-        demoUrl: '',
-        category: '',
+        icon: 'crown',
+        color: 'from-blue-400 to-purple-500',
+        features: ['', '', '', ''],
+        popular: false
       });
-      setFiles([]);
-      setExistingImages([]);
-      fetchAll();
-    } catch (err) {
-      toast.error(err.message);
-    } finally {
-      setUploading(false);
+
+      fetchAllData();
+    } catch (error) {
+      console.error('Error adding rank:', error);
+      toast.error('Failed to add rank');
     }
   };
 
-  const handleEdit = (item, type) => {
-    setForm({
-      name: item.name || '',
-      description: item.description || '',
-      price: item.price || '',
-      discount: item.discount || '',
-      imageURLs: '',
-      type,
-      demoUrl: item.demoUrl || '',
-      category: item.category || '',
+  const handleEditRank = (rank) => {
+    setRankForm({
+      name: rank.name || '',
+      description: rank.description || '',
+      price: rank.price?.toString() || '',
+      originalPrice: rank.originalPrice?.toString() || '',
+      discount: rank.discount?.toString() || '',
+      icon: rank.icon || 'crown',
+      color: rank.color || 'from-blue-400 to-purple-500',
+      features: [...(rank.features || []), '', '', '', ''].slice(0, 4),
+      popular: rank.popular || false
     });
-    setExistingImages(item.images || []);
-    setEditingId(item.id);
-    window.scrollTo(0, 0);
+    setEditingRank(rank.id);
+    setActiveTab('addRank');
   };
 
-  const handleDelete = async (type, id, userId, nested) => {
+  const handleDeleteRank = async (rankId) => {
+    if (!window.confirm('Are you sure you want to delete this rank?')) return;
+    
     try {
-      if (nested && userId) {
-        // For shop orders, delete from root-level 'orders' collection
-        if (type === 'users' || type === 'orders') {
-          await deleteDoc(doc(db, 'orders', id));
-        } else {
-          await deleteDoc(doc(db, type, userId, nested, id));
-        }
-      } else {
-        await deleteDoc(doc(db, type, id));
-      }
-      toast.success('Deleted');
-      fetchAll();
-    } catch (err) {
-      toast.error('Failed to delete');
+      await deleteDoc(doc(db, 'products', rankId));
+      toast.success('Rank deleted successfully');
+      fetchAllData();
+    } catch (error) {
+      console.error('Error deleting rank:', error);
+      toast.error('Failed to delete rank');
     }
   };
 
-  const handleComplete = async (type, id, userId, nested) => {
+  const updateOrderStatus = async (orderId, newStatus, orderType) => {
     try {
-      // For shop orders, update status in root-level 'orders' collection
-      if (type === 'users' || type === 'orders') {
-        await updateDoc(doc(db, 'orders', id), { status: 'completed' });
-      } else if (nested && userId) {
-        await updateDoc(doc(db, type, userId, nested, id), { status: 'completed' });
-      } else {
-        await updateDoc(doc(db, type, id), { status: 'completed' });
-      }
-      toast.success('Marked complete');
-      fetchAll();
-    } catch (err) {
-      toast.error('Failed to mark complete');
-    }
-  };
-
-  const handleStatusChange = async (type, id, userId, newStatus) => {
-    try {
-      // For shop orders, always update in root-level 'orders' collection
-      if (type === 'users' || type === 'orders') {
-        await updateDoc(doc(db, 'orders', id), { status: newStatus });
-      } else {
-        // For other types (e.g., digital orders), update in given collection
-        await updateDoc(doc(db, type, id), { status: newStatus });
-      }
+      const collection_name = orderType === 'Discord Rank' ? 'productOrders' : 'orders';
+      await updateDoc(doc(db, collection_name, orderId), { status: newStatus });
       toast.success(`Order status updated to ${newStatus}`);
-      fetchAll();
-    } catch (err) {
-      toast.error('Failed to update order status');
+      fetchAllData();
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error('Failed to update status');
     }
   };
 
-  const tabs = [
-    { id: 'addProduct', label: 'Add/Edit Product' },
-    { id: 'shopItems', label: 'Shop Items' },
-    { id: 'digitalItems', label: 'Digital Items' },
-    { id: 'shopOrders', label: 'Shop Orders' },
-    { id: 'digitalOrders', label: 'Digital Orders' },
-    // Removed serviceOrders tab as per user request
-    // { id: 'serviceOrders', label: 'Service Orders' },
-  ];
+  const deleteOrder = async (orderId, orderType) => {
+    if (!window.confirm('Are you sure you want to delete this order?')) return;
+    
+    try {
+      const collection_name = orderType === 'Discord Rank' ? 'productOrders' : 'orders';
+      await deleteDoc(doc(db, collection_name, orderId));
+      toast.success('Order deleted successfully');
+      fetchAllData();
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      toast.error('Failed to delete order');
+    }
+  };
 
-  if (!isAdmin(user)) return <div className="text-center text-xl text-red-600 dark:text-red-400 py-20">🔒 Admins Only</div>;
+  const filteredPurchases = purchases.filter(purchase => {
+    const matchesSearch = 
+      purchase.userEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (users[purchase.userId]?.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      purchase.items.some(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    const matchesStatus = statusFilter === 'all' || purchase.status.toLowerCase() === statusFilter.toLowerCase();
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  const getIconComponent = (iconName) => {
+    const iconOption = iconOptions.find(opt => opt.value === iconName);
+    return iconOption ? iconOption.icon : FaCrown;
+  };
+
+  // Code management functions
+  const fetchCodesForRank = async (rankId) => {
+    try {
+      setCodesLoading(true);
+      const codesSnap = await getDocs(collection(db, 'rankCodes'));
+      const codes = codesSnap.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(code => code.rankId === rankId);
+      return codes;
+    } catch (error) {
+      console.error('Error fetching codes:', error);
+      toast.error('Failed to fetch codes');
+      return [];
+    } finally {
+      setCodesLoading(false);
+    }
+  };
+
+  const handleAddCodes = async (e) => {
+    e.preventDefault();
+    if (!selectedRankForCodes || !newCodes.trim()) {
+      toast.error('Please select a rank and enter codes');
+      return;
+    }
+
+    try {
+      setCodesLoading(true);
+      const codesList = newCodes.split('\n').filter(code => code.trim() !== '');
+      
+      for (const code of codesList) {
+        await addDoc(collection(db, 'rankCodes'), {
+          code: code.trim(),
+          rankId: selectedRankForCodes,
+          rankName: customRanks.find(r => r.id === selectedRankForCodes)?.name || 'Unknown Rank',
+          isUsed: false,
+          createdAt: serverTimestamp(),
+          createdBy: user.uid
+        });
+      }
+
+      toast.success(`Added ${codesList.length} codes successfully!`);
+      setNewCodes('');
+      fetchAllData();
+    } catch (error) {
+      console.error('Error adding codes:', error);
+      toast.error('Failed to add codes');
+    } finally {
+      setCodesLoading(false);
+    }
+  };
+
+  const handleDeleteCode = async (codeId) => {
+    if (!window.confirm('Are you sure you want to delete this code?')) return;
+    
+    try {
+      await deleteDoc(doc(db, 'rankCodes', codeId));
+      toast.success('Code deleted successfully');
+      fetchAllData();
+    } catch (error) {
+      console.error('Error deleting code:', error);
+      toast.error('Failed to delete code');
+    }
+  };
+
+  if (!isAdmin(user)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <FaCrown className="text-6xl text-red-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-red-600 dark:text-red-400">Access Denied</h1>
+          <p className="text-gray-600 dark:text-gray-400">Admin privileges required</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10 text-gray-800 dark:text-white">
-      <h1 className="text-3xl font-bold text-center mb-6 text-blue-600 dark:text-blue-400">⚙️ Admin Panel</h1>
+    <div className="min-h-screen relative overflow-hidden py-8 px-4">
+      {/* Floating Elements */}
+      <div className="absolute top-20 left-10 w-12 h-12 bg-green-500 rounded-sm opacity-20 animate-bounce" style={{ animationDelay: '0s' }}></div>
+      <div className="absolute top-32 right-20 w-8 h-8 bg-blue-500 rounded-sm opacity-30 animate-bounce" style={{ animationDelay: '1s' }}></div>
+      <div className="absolute bottom-40 left-1/4 w-10 h-10 bg-yellow-500 rounded-sm opacity-25 animate-bounce" style={{ animationDelay: '2s' }}></div>
+      <div className="absolute top-60 right-1/3 w-6 h-6 bg-purple-500 rounded-sm opacity-20 animate-bounce" style={{ animationDelay: '3s' }}></div>
 
-      <div className="flex flex-wrap justify-center gap-2 mb-6">
-        {tabs.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)}
-            className={`px-4 py-2 rounded ${tab === t.id ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-black dark:text-white'}`}>
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <div className="max-w-7xl mx-auto relative z-10">
+        {/* Header */}
+        <div className="text-center mb-8 animate-fade-in-down">
+          <div className="inline-flex items-center gap-2 bg-blue-100 dark:bg-blue-900/30 px-6 py-3 rounded-full mb-6 border border-blue-200 dark:border-blue-700">
+            <FaCrown className="text-blue-600" />
+            <span className="text-sm font-semibold text-blue-800 dark:text-blue-200">Admin Dashboard</span>
+          </div>
+          <h1 className="text-4xl font-black mb-4 bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 dark:from-white dark:via-gray-200 dark:to-white bg-clip-text text-transparent">
+            Discord Ranks Management
+          </h1>
+          <p className="text-xl text-gray-600 dark:text-gray-300">
+            Manage purchases, create custom ranks, and monitor orders
+          </p>
+        </div>
 
-      {/* Add Product Form */}
-      {tab === 'addProduct' && (
-        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow max-w-xl mx-auto border space-y-4">
-          <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} className={inputStyle}>
-            <option value="shop">Shop Product</option>
-            <option value="digital">Digital Product</option>
-          </select>
+        {/* Tabs */}
+        <div className="flex flex-wrap justify-center gap-2 mb-8">
+          {tabs.map(tab => (
+            <button 
+              key={tab.id} 
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${
+                activeTab === tab.id 
+                  ? 'bg-blue-600 text-white shadow-lg' 
+                  : 'bg-white/70 dark:bg-gray-800/70 text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700'
+              }`}
+            >
+              <tab.icon />
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-          {form.type === 'shop' && (
-            <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} className={inputStyle} required>
-              <option value="">-- Select Category --</option>
-              {shopCategories.map(cat => (
-                <option key={cat.value} value={cat.value}>{cat.label}</option>
-              ))}
-            </select>
-          )}
-
-          <input type="text" placeholder="Product Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className={inputStyle} required />
-          <textarea placeholder="Description" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className={`${inputStyle} h-24`} />
-          <input type="number" placeholder="Price" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} className={inputStyle} required />
-          <input type="number" placeholder="% Off (Optional)" value={form.discount} onChange={e => setForm({ ...form, discount: e.target.value })} className={inputStyle} />
-          {form.type === 'digital' && (
-            <input type="url" placeholder="Demo Link (Optional)" value={form.demoUrl} onChange={e => setForm({ ...form, demoUrl: e.target.value })} className={inputStyle} />
-          )}
-          <input type="file" accept="image/*" multiple onChange={e => setFiles(Array.from(e.target.files))} className="text-sm" />
-          <textarea placeholder="Image URLs (comma or newline separated)" value={form.imageURLs} onChange={e => setForm({ ...form, imageURLs: e.target.value })} className={`${inputStyle} h-24`} />
-
-          {existingImages.length > 0 && (
-            <ul className="space-y-2">
-              {existingImages.map((url, i) => (
-                <li key={i} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <img src={url} alt="" className="w-14 h-14 object-cover rounded" />
-                    <span className="truncate max-w-xs">{url}</span>
+        {/* Tab Content */}
+        {activeTab === 'purchases' && (
+          <>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm p-6 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-xl">
+                <div className="flex items-center gap-4">
+                  <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-full">
+                    <FaShoppingCart className="text-2xl text-blue-600" />
                   </div>
-                  <button onClick={() => setExistingImages(existingImages.filter((_, idx) => idx !== i))} className="text-red-500">Remove</button>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <button type="submit" disabled={uploading} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">
-            {uploading ? 'Uploading...' : editingId ? 'Update Product' : 'Add Product'}
-          </button>
-        </form>
-      )}
-
-      {/* Other Tabs */}
-      {tab === 'shopItems' && <ProductGrid data={shopProducts} type="shopProducts" onDelete={handleDelete} onEdit={(item) => handleEdit(item, 'shop')} />}
-      {tab === 'digitalItems' && <ProductGrid data={digitalProducts} type="products" onDelete={handleDelete} onEdit={(item) => handleEdit(item, 'digital')} />}
-      {tab === 'shopOrders' && (
-        <>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">Shop Orders</h2>
-          </div>
-          {loadingOrders && <p>Loading orders...</p>}
-          {errorOrders && <p className="text-red-600">{errorOrders}</p>}
-          <OrderGrid
-            orders={shopOrders}
-            type="users"
-            nested="orders"
-            onDelete={(type, id, userId) => handleDelete(type, id, userId, 'orders')}
-            onComplete={(type, id, userId) => handleComplete(type, id, userId, 'orders')}
-            onStatusChange={handleStatusChange}
-            onOrderClick={openModal}
-            userMap={userMap}
-          />
-        </>
-      )}
-
-      {tab === 'digitalOrders' && (
-        <>
-          <div className='flex justify-between items-center mb-4'>
-            <h2 className='text-xl font-bold'>Products Orders</h2>
-          </div>
-          <OrderGrid orders={digitalOrders}
-            type="productOrders"
-            onDelete={handleDelete}
-            onComplete={handleComplete}
-            onOrderClick={openModal}
-            userMap={userMap}
-            showUserEmail={true}
-          />
-        </>
-      )}
-      {/* Removed serviceOrders tab as per user request */}
-      {/* {tab === 'serviceOrders' && <OrderGrid orders={serviceOrders} type="orders" onDelete={handleDelete} onComplete={handleComplete} />} */}
-
-      {modalOpen && selectedOrder && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg max-w-lg w-full max-h-[80vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold mb-4">Order Details</h2>
-            <button onClick={closeModal} className="mb-4 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">Close</button>
-            <div className="space-y-2 text-sm">
-              <p><strong>Order ID:</strong> {selectedOrder.id}</p>
-              <p><strong>User:</strong> {userMap[selectedOrder.userId] || selectedOrder.userId || 'N/A'}</p>
-              <p><strong>User Email:</strong> {selectedOrder.userEmail || 'N/A'}</p>
-              <p><strong>Status:</strong> {selectedOrder.status || 'N/A'}</p>
-              <p><strong>Total Price:</strong> ₹{selectedOrder.items?.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 1), 0) || selectedOrder.price || 0}</p>
-              {selectedOrder.address && (
-                <div>
-                  <h3 className="font-semibold mt-2">Shipping Address:</h3>
-                  <p>{selectedOrder.address.name}</p>
-                  <p>{selectedOrder.address.addressLine}</p>
-                  <p>{selectedOrder.address.city}, {selectedOrder.address.state} - {selectedOrder.address.pincode}</p>
-                  <p>Phone: {selectedOrder.address.phone}</p>
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Total Purchases</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalPurchases}</p>
+                  </div>
                 </div>
-              )}
-              {selectedOrder.items && selectedOrder.items.length > 0 ? (
-                <div>
-                  <h3 className="font-semibold mt-2">Items Ordered:</h3>
-                  <div className="space-y-2 max-h-40 overflow-y-auto border p-2 rounded">
-                    {selectedOrder.items.map((item, index) => {
-                      const itemName = item.name || item.title || 'Unnamed Item';
-                      const itemQty = item.quantity || 1;
-                      const itemPrice = item.price || 0;
-                      return (
-                        <div key={index} className="flex justify-between border-b border-gray-300 dark:border-gray-700 pb-1">
-                          <div>
-                            <p className="font-semibold">{itemName}</p>
-                            <p className="text-xs text-gray-600 dark:text-gray-400">Qty: {itemQty}</p>
+              </div>
+
+              <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm p-6 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-xl">
+                <div className="flex items-center gap-4">
+                  <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-full">
+                    <FaDollarSign className="text-2xl text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Total Revenue</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">₹{stats.totalRevenue}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm p-6 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-xl">
+                <div className="flex items-center gap-4">
+                  <div className="bg-yellow-100 dark:bg-yellow-900/30 p-3 rounded-full">
+                    <FaCalendarAlt className="text-2xl text-yellow-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Pending Orders</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.pendingOrders}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm p-6 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-xl">
+                <div className="flex items-center gap-4">
+                  <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-full">
+                    <FaChartLine className="text-2xl text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Completed Orders</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.completedOrders}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Search and Filter */}
+            <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm p-6 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-xl mb-8">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1 relative">
+                  <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search by email, username, or product..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm"
+                  />
+                </div>
+                <div className="relative">
+                  <FaFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="pl-10 pr-8 py-3 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="processing">Processing</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Orders List */}
+            {loading ? (
+              <div className="text-center py-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-600 dark:text-gray-400">Loading purchases...</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {filteredPurchases.length === 0 ? (
+                  <div className="text-center py-20">
+                    <FaShoppingCart className="text-6xl text-gray-400 mx-auto mb-4" />
+                    <p className="text-xl text-gray-600 dark:text-gray-400">No purchases found</p>
+                  </div>
+                ) : (
+                  filteredPurchases.map((purchase) => (
+                    <div key={purchase.id} className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-xl overflow-hidden">
+                      <div className="p-6">
+                        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                          {/* Order Info */}
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-3">
+                              <div className={`p-2 rounded-full ${purchase.type === 'Discord Rank' ? 'bg-purple-100 dark:bg-purple-900/30' : 'bg-blue-100 dark:bg-blue-900/30'}`}>
+                                {purchase.type === 'Discord Rank' ? 
+                                  <FaCrown className="text-purple-600" /> : 
+                                  <FaShoppingCart className="text-blue-600" />
+                                }
+                              </div>
+                              <div>
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                                  {purchase.type} - Order #{purchase.id.slice(-6)}
+                                </h3>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                  {purchase.createdAt?.toDate ? purchase.createdAt.toDate().toLocaleDateString() : 'Date not available'}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* User Details */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                              <div>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">Customer Email</p>
+                                <p className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                  <FaEnvelope className="text-gray-400" />
+                                  {purchase.userEmail}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">Username</p>
+                                <p className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                  <FaUsers className="text-gray-400" />
+                                  {users[purchase.userId]?.username || 'Unknown'}
+                                </p>
+                              </div>
+                              {purchase.discordUsername && (
+                                <div>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400">Discord Username</p>
+                                  <p className="font-semibold text-gray-900 dark:text-white">
+                                    {purchase.discordUsername}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Items */}
+                            <div className="mb-4">
+                              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Items Purchased</p>
+                              <div className="space-y-2">
+                                {purchase.items.map((item, index) => (
+                                  <div key={index} className="flex justify-between items-center bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
+                                    <span className="font-medium text-gray-900 dark:text-white">{item.name}</span>
+                                    <span className="text-green-600 dark:text-green-400 font-bold">
+                                      ₹{item.price} {item.quantity > 1 && `x${item.quantity}`}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Total Amount */}
+                            <div className="flex justify-between items-center mb-4">
+                              <span className="text-lg font-bold text-gray-900 dark:text-white">Total Amount:</span>
+                              <span className="text-2xl font-bold text-green-600 dark:text-green-400">₹{purchase.totalAmount}</span>
+                            </div>
                           </div>
-                          <div className="font-semibold">₹{itemPrice}</div>
+
+                          {/* Actions */}
+                          <div className="flex flex-col gap-3 lg:w-48">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-gray-600 dark:text-gray-400">Status:</span>
+                              <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                purchase.status === 'Completed' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
+                                purchase.status === 'Processing' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
+                                purchase.status === 'Shipped' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400' :
+                                'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                              }`}>
+                                {purchase.status}
+                              </span>
+                            </div>
+
+                            <select
+                              value={purchase.status}
+                              onChange={(e) => updateOrderStatus(purchase.id, e.target.value, purchase.type)}
+                              className="px-3 py-2 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                            >
+                              <option value="Pending">Pending</option>
+                              <option value="Processing">Processing</option>
+                              <option value="Shipped">Shipped</option>
+                              <option value="Completed">Completed</option>
+                            </select>
+
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => {
+                                  setSelectedPurchase(purchase);
+                                  setShowModal(true);
+                                }}
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                              >
+                                <FaEye />
+                                View
+                              </button>
+                              <button
+                                onClick={() => deleteOrder(purchase.id, purchase.type)}
+                                className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                              >
+                                <FaTrash />
+                              </button>
+                            </div>
+                          </div>
                         </div>
-                      );
-                    })}
-                  </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </>
+        )}
+
+        {activeTab === 'addRank' && (
+          <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm p-8 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-xl max-w-4xl mx-auto">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+              <FaPlus />
+              {editingRank ? 'Edit Discord Rank' : 'Add New Discord Rank'}
+            </h2>
+            
+            <form onSubmit={handleAddRank} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Rank Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={rankForm.name}
+                    onChange={handleRankFormChange}
+                    placeholder="Enter rank name (e.g., Elite Rank)"
+                    className="w-full px-4 py-3 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
                 </div>
-              ) : (
-                <p>No items found in this order.</p>
-              )}
-              {selectedOrder.createdAt && (
-                <p><strong>Order Date:</strong> {selectedOrder.createdAt.toDate ? selectedOrder.createdAt.toDate().toLocaleString() : new Date(selectedOrder.createdAt).toLocaleString()}</p>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Description *
+                  </label>
+                  <textarea
+                    name="description"
+                    value={rankForm.description}
+                    onChange={handleRankFormChange}
+                    placeholder="Enter rank description"
+                    rows="3"
+                    className="w-full px-4 py-3 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Price (₹) *
+                  </label>
+                  <input
+                    type="number"
+                    name="price"
+                    value={rankForm.price}
+                    onChange={handleRankFormChange}
+                    placeholder="299"
+                    className="w-full px-4 py-3 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Original Price (₹)
+                  </label>
+                  <input
+                    type="number"
+                    name="originalPrice"
+                    value={rankForm.originalPrice}
+                    onChange={handleRankFormChange}
+                    placeholder="399"
+                    className="w-full px-4 py-3 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Discount (%)
+                  </label>
+                  <input
+                    type="number"
+                    name="discount"
+                    value={rankForm.discount}
+                    onChange={handleRankFormChange}
+                    placeholder="25"
+                    className="w-full px-4 py-3 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Icon
+                  </label>
+                  <select
+                    name="icon"
+                    value={rankForm.icon}
+                    onChange={handleRankFormChange}
+                    className="w-full px-4 py-3 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    {iconOptions.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Color Theme
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {colorOptions.map(option => (
+                    <label key={option.value} className="cursor-pointer">
+                      <input
+                        type="radio"
+                        name="color"
+                        value={option.value}
+                        checked={rankForm.color === option.value}
+                        onChange={handleRankFormChange}
+                        className="sr-only"
+                      />
+                      <div className={`p-3 rounded-lg border-2 transition-all ${
+                        rankForm.color === option.value 
+                          ? 'border-blue-500 ring-2 ring-blue-200' 
+                          : 'border-gray-300 dark:border-gray-600'
+                      }`}>
+                        <div className={`h-8 rounded ${option.preview} mb-2`}></div>
+                        <p className="text-sm font-medium text-center text-gray-700 dark:text-gray-300">
+                          {option.label}
+                        </p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Features (up to 4)
+                </label>
+                <div className="space-y-3">
+                  {rankForm.features.map((feature, index) => (
+                    <input
+                      key={index}
+                      type="text"
+                      value={feature}
+                      onChange={(e) => handleFeatureChange(index, e.target.value)}
+                      placeholder={`Feature ${index + 1}`}
+                      className="w-full px-4 py-3 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  name="popular"
+                  id="popular"
+                  checked={rankForm.popular}
+                  onChange={handleRankFormChange}
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label htmlFor="popular" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Mark as Popular
+                </label>
+              </div>
+
+              <div className="flex gap-4">
+                <button
+                  type="submit"
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                  <FaSave />
+                  {editingRank ? 'Update Rank' : 'Add Rank'}
+                </button>
+                {editingRank && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingRank(null);
+                      setRankForm({
+                        name: '',
+                        description: '',
+                        price: '',
+                        originalPrice: '',
+                        discount: '',
+                        icon: 'crown',
+                        color: 'from-blue-400 to-purple-500',
+                        features: ['', '', '', ''],
+                        popular: false
+                      });
+                    }}
+                    className="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+        )}
+
+        {activeTab === 'manageRanks' && (
+          <div className="space-y-6">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Manage Custom Ranks</h2>
+              <p className="text-gray-600 dark:text-gray-400">Edit or delete custom Discord ranks</p>
+            </div>
+
+            {customRanks.length === 0 ? (
+              <div className="text-center py-20">
+                <FaCrown className="text-6xl text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-gray-600 dark:text-gray-400 mb-2">No Custom Ranks</h3>
+                <p className="text-gray-500 dark:text-gray-500 mb-6">Create your first custom Discord rank</p>
+                <button
+                  onClick={() => setActiveTab('addRank')}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2 mx-auto"
+                >
+                  <FaPlus />
+                  Add First Rank
+                </button>
+              </div>
+            ) : (
+              <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                {customRanks.map((rank) => {
+                  const IconComponent = getIconComponent(rank.icon);
+                  return (
+                    <div key={rank.id} className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm overflow-hidden flex flex-col group relative rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-xl hover:shadow-2xl transition-all duration-300">
+                      {rank.popular && (
+                        <div className="absolute -top-3 -right-3 z-20">
+                          <div className="bg-gradient-to-r from-green-500 to-blue-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                            POPULAR
+                          </div>
+                        </div>
+                      )}
+
+                      <div className={`absolute -inset-1 bg-gradient-to-r ${rank.color} blur-lg opacity-0 group-hover:opacity-20 transition-all rounded-xl z-0`} />
+
+                      {/* Rank Header */}
+                      <div className={`relative bg-gradient-to-r ${rank.color} p-6 text-white`}>
+                        <div className="flex items-center justify-center mb-4">
+                          <IconComponent className="text-4xl text-white" />
+                        </div>
+                        <h2 className="text-xl font-black text-center mb-2">
+                          {rank.name}
+                        </h2>
+                        <p className="text-center text-white/90 text-sm">
+                          {rank.description}
+                        </p>
+                      </div>
+
+                      {/* Rank Content */}
+                      <div className="p-6 flex flex-col flex-1 justify-between z-10 relative">
+                        {/* Pricing */}
+                        <div className="text-center mb-6">
+                          <div className="flex items-center justify-center gap-2 mb-2">
+                            <span className="text-2xl font-black text-green-600 dark:text-green-400">
+                              ₹{rank.price}
+                            </span>
+                            {rank.discount > 0 && rank.originalPrice && (
+                              <span className="text-lg text-gray-500 dark:text-gray-400 line-through">
+                                ₹{rank.originalPrice}
+                              </span>
+                            )}
+                          </div>
+                          {rank.discount > 0 && (
+                            <div className="inline-block bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-1 rounded-full text-xs font-bold">
+                              {rank.discount}% OFF
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Features */}
+                        {rank.features && rank.features.length > 0 && (
+                          <div className="mb-6">
+                            <h4 className="font-bold text-gray-900 dark:text-white mb-3">Features:</h4>
+                            <ul className="space-y-2">
+                              {rank.features.slice(0, 4).map((feature, idx) => (
+                                <li key={idx} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                                  {feature}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleEditRank(rank)}
+                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+                          >
+                            <FaEdit />
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteRank(rank.id)}
+                            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+                          >
+                            <FaTrash />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'manageCodes' && (
+          <div className="space-y-6">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Manage Discord Rank Codes</h2>
+              <p className="text-gray-600 dark:text-gray-400">Add one-time use codes for Discord ranks</p>
+            </div>
+
+            {/* Add Codes Form */}
+            <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm p-8 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-xl max-w-4xl mx-auto">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <FaPlus />
+                Add Codes to Rank
+              </h3>
+              
+              <form onSubmit={handleAddCodes} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Select Rank *
+                  </label>
+                  <select
+                    value={selectedRankForCodes}
+                    onChange={(e) => setSelectedRankForCodes(e.target.value)}
+                    className="w-full px-4 py-3 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="">Choose a rank...</option>
+                    {customRanks.map(rank => (
+                      <option key={rank.id} value={rank.id}>
+                        {rank.name} - ₹{rank.price}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Discord Rank Codes *
+                  </label>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                    Enter one code per line. These codes will be given to users after purchase.
+                  </p>
+                  <textarea
+                    value={newCodes}
+                    onChange={(e) => setNewCodes(e.target.value)}
+                    placeholder={`ELITE-RANK-001\nELITE-RANK-002\nELITE-RANK-003\n...`}
+                    rows="8"
+                    className="w-full px-4 py-3 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {newCodes.split('\n').filter(code => code.trim() !== '').length} codes will be added
+                  </p>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={codesLoading}
+                  className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <FaSave />
+                  {codesLoading ? 'Adding Codes...' : 'Add Codes'}
+                </button>
+              </form>
+            </div>
+
+            {/* Codes List by Rank */}
+            <div className="space-y-6">
+              {customRanks.map(rank => {
+                const rankCodesForThisRank = rankCodes.filter(code => code.rankId === rank.id);
+                const availableCodes = rankCodesForThisRank.filter(code => !code.isUsed);
+                const usedCodes = rankCodesForThisRank.filter(code => code.isUsed);
+                const IconComponent = getIconComponent(rank.icon);
+
+                return (
+                  <div key={rank.id} className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-xl overflow-hidden">
+                    {/* Rank Header */}
+                    <div className={`bg-gradient-to-r ${rank.color} p-6 text-white`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <IconComponent className="text-3xl" />
+                          <div>
+                            <h3 className="text-xl font-bold">{rank.name}</h3>
+                            <p className="text-white/90">₹{rank.price}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-white/90">Available Codes</p>
+                          <p className="text-2xl font-bold">{availableCodes.length}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Codes Content */}
+                    <div className="p-6">
+                      {rankCodesForThisRank.length === 0 ? (
+                        <div className="text-center py-8">
+                          <FaLock className="text-4xl text-gray-400 mx-auto mb-3" />
+                          <p className="text-gray-600 dark:text-gray-400">No codes added for this rank</p>
+                          <button
+                            onClick={() => {
+                              setSelectedRankForCodes(rank.id);
+                              setActiveTab('manageCodes');
+                              document.querySelector('textarea').focus();
+                            }}
+                            className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 mx-auto"
+                          >
+                            <FaPlus />
+                            Add Codes
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {/* Available Codes */}
+                          {availableCodes.length > 0 && (
+                            <div>
+                              <h4 className="font-bold text-green-600 dark:text-green-400 mb-3 flex items-center gap-2">
+                                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                Available Codes ({availableCodes.length})
+                              </h4>
+                              <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                                {availableCodes.map(code => (
+                                  <div key={code.id} className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 p-3 rounded-lg flex justify-between items-center">
+                                    <span className="font-mono text-sm text-green-800 dark:text-green-300">
+                                      {code.code}
+                                    </span>
+                                    <button
+                                      onClick={() => handleDeleteCode(code.id)}
+                                      className="text-red-500 hover:text-red-700 transition-colors"
+                                    >
+                                      <FaTrash className="text-xs" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Used Codes */}
+                          {usedCodes.length > 0 && (
+                            <div>
+                              <h4 className="font-bold text-gray-600 dark:text-gray-400 mb-3 flex items-center gap-2">
+                                <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
+                                Used Codes ({usedCodes.length})
+                              </h4>
+                              <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                                {usedCodes.map(code => (
+                                  <div key={code.id} className="bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 p-3 rounded-lg flex justify-between items-center">
+                                    <div className="flex-1">
+                                      <span className="font-mono text-sm text-gray-600 dark:text-gray-400 line-through">
+                                        {code.code}
+                                      </span>
+                                      <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                                        Used: {code.usedAt?.toDate ? code.usedAt.toDate().toLocaleDateString() : 'Unknown'}
+                                      </p>
+                                      {code.usedBy && (
+                                        <p className="text-xs text-gray-500 dark:text-gray-500">
+                                          By: {code.usedBy}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <button
+                                      onClick={() => {
+                                        if (window.confirm('Are you sure you want to delete this used code? This action cannot be undone.')) {
+                                          handleDeleteCode(code.id);
+                                        }
+                                      }}
+                                      className="text-red-500 hover:text-red-700 transition-colors ml-2 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                                      title="Delete used code"
+                                    >
+                                      <FaTrash className="text-xs" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {customRanks.length === 0 && (
+                <div className="text-center py-20">
+                  <FaCrown className="text-6xl text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-bold text-gray-600 dark:text-gray-400 mb-2">No Ranks Available</h3>
+                  <p className="text-gray-500 dark:text-gray-500 mb-6">Create Discord ranks first to add codes</p>
+                  <button
+                    onClick={() => setActiveTab('addRank')}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2 mx-auto"
+                  >
+                    <FaPlus />
+                    Create First Rank
+                  </button>
+                </div>
               )}
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-    </div>
-  );
-};
+        {/* Modal for Order Details */}
+        {showModal && selectedPurchase && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Order Details</h2>
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                  >
+                    ✕
+                  </button>
+                </div>
 
-// Reusable ProductGrid Component
-const ProductGrid = ({ data, type, onDelete, onEdit }) => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-    {data.map(item => {
-      const original = item.price;
-      const discount = item.discount;
-      const final = discount > 0 ? original - (original * discount / 100) : original;
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Order Information</h3>
+                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg space-y-2">
+                      <p><strong>Order ID:</strong> {selectedPurchase.id}</p>
+                      <p><strong>Type:</strong> {selectedPurchase.type}</p>
+                      <p><strong>Status:</strong> {selectedPurchase.status}</p>
+                      <p><strong>Date:</strong> {selectedPurchase.createdAt?.toDate ? selectedPurchase.createdAt.toDate().toLocaleString() : 'Not available'}</p>
+                    </div>
+                  </div>
 
-      return (
-        <div key={item.id} className="bg-white dark:bg-gray-800 p-5 rounded shadow border flex flex-col">
-          <img src={item.images?.[0]} alt={item.name} className="h-40 w-full object-cover rounded mb-2" />
-          <h3 className="text-lg font-bold mb-1">{item.name}</h3>
-          <p className="text-green-600 dark:text-green-400 font-semibold mb-1">₹{final}</p>
-          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Category: {item.category || 'N/A'}</p>
-          <div className="mt-3 flex gap-2">
-            <button onClick={() => onEdit(item)} className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded">Edit</button>
-            <button onClick={() => onDelete(type, item.id)} className="flex-1 bg-red-600 hover:bg-red-700 text-white py-1 px-3 rounded">Delete</button>
-          </div>
-        </div>
-      );
-    })}
-  </div>
-);
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Customer Information</h3>
+                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg space-y-2">
+                      <p><strong>Email:</strong> {selectedPurchase.userEmail}</p>
+                      <p><strong>Username:</strong> {users[selectedPurchase.userId]?.username || 'Unknown'}</p>
+                      {selectedPurchase.discordUsername && (
+                        <p><strong>Discord Username:</strong> {selectedPurchase.discordUsername}</p>
+                      )}
+                      {selectedPurchase.assignedCode && (
+                        <p><strong>Assigned Code:</strong> <span className="font-mono bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded text-green-800 dark:text-green-300">{selectedPurchase.assignedCode}</span></p>
+                      )}
+                    </div>
+                  </div>
 
-// Reusable OrderGrid Component
+                  {selectedPurchase.address && (
+                    <div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Shipping Address</h3>
+                      <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg space-y-2">
+                        <p><strong>Name:</strong> {selectedPurchase.address.name}</p>
+                        <p><strong>Address:</strong> {selectedPurchase.address.addressLine}</p>
+                        <p><strong>City:</strong> {selectedPurchase.address.city}</p>
+                        <p><strong>State:</strong> {selectedPurchase.address.state}</p>
+                        <p><strong>Pincode:</strong> {selectedPurchase.address.pincode}</p>
+                        <p><strong>Phone:</strong> {selectedPurchase.address.phone}</p>
+                      </div>
+                    </div>
+                  )}
 
-const OrderGrid = ({ orders, type, nested, onDelete, onComplete, onOrderClick, userMap, onStatusChange, showUserEmail }) => {
-  const [statusMap, setStatusMap] = React.useState({});
-
-  const handleSelectChange = (orderId, value) => {
-    setStatusMap(prev => ({ ...prev, [orderId]: value }));
-  };
-
-  const handleChangeClick = (orderId, userId) => {
-    if (statusMap[orderId]) {
-      onStatusChange(type, orderId, userId, statusMap[orderId]);
-    }
-  };
-
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-      {orders.map(order => {
-        const itemNames = order.items && order.items.length > 0
-          ? order.items.map(item => item.name || item.title || 'Unnamed Item').join(', ')
-          : 'No items';
-        return (
-          <div key={order.id} onClick={() => onOrderClick && onOrderClick(order)} className="bg-white dark:bg-gray-800 p-5 rounded shadow border cursor-pointer">
-            <p><strong>Items:</strong> {itemNames}</p>
-            <p><strong>Authenticated User Email:</strong> {userMap && order.userId ? userMap[order.userId] || order.userId : 'Unknown'}</p>
-            <p><strong>Entered Email:</strong> {order.userEmail || 'N/A'}</p>
-            <OrderStatusTracker status={order.status || 'Pending'} />
-            <p><strong>Total:</strong> ₹{order.items?.reduce((sum, item) => sum + (item.price || 0), 0) || order.price || 0}</p>
-            <div className="mt-3 flex flex-col gap-2">
-              <select
-                value={statusMap[order.id] || order.status || 'Pending'}
-                onClick={e => e.stopPropagation()}
-                onChange={e => handleSelectChange(order.id, e.target.value)}
-                className="p-1 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-black dark:text-white"
-              >
-                <option value="Pending">Pending</option>
-                <option value="Processing">Processing</option>
-                <option value="Shipped">Shipped</option>
-                <option value="Completed">Completed</option>
-              </select>
-              <div className="flex gap-2">
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleChangeClick(order.id, order.userId); }}
-                  disabled={!statusMap[order.id] || statusMap[order.id] === order.status}
-                  className="flex-1 bg-blue-600 text-white rounded py-1 disabled:opacity-50"
-                >
-                  Change
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onDelete(type, order.id, order.userId); }}
-                  className="flex-1 bg-red-600 text-white rounded py-1"
-                >
-                  Delete
-                </button>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Items</h3>
+                    <div className="space-y-2">
+                      {selectedPurchase.items.map((item, index) => (
+                        <div key={index} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex justify-between">
+                          <div>
+                            <p className="font-medium">{item.name}</p>
+                            {item.quantity > 1 && <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>}
+                          </div>
+                          <p className="font-bold text-green-600">₹{item.price}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/30 rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <span className="text-lg font-bold">Total Amount:</span>
+                        <span className="text-2xl font-bold text-green-600">₹{selectedPurchase.totalAmount}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        );
-      })}
+        )}
+      </div>
     </div>
   );
 };

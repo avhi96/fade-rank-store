@@ -6,7 +6,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 const AuthContext = createContext();
 
 // ✅ Define admin emails (you can move this to Firestore for dynamic access later)
-const ADMIN_EMAILS = ["nyxu013@gmail.com", "avhi5949@gmail.com"]; // Add your admins here
+const ADMIN_EMAILS = ["nyxu013@gmail.com", "avhi5949@gmail.com", "rakshatplay@gmail.com"]; // Add your admins here
 
 // Custom hook to use the auth context
 export const useAuth = () => useContext(AuthContext);

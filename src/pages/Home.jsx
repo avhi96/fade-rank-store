@@ -1,82 +1,125 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { FaCube, FaUsers, FaGem, FaCrown, FaDiamond, FaStar } from 'react-icons/fa6';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white flex flex-col justify-between px-4">
+    <div className="min-h-screen flex flex-col">
+      {/* Professional Hero Section */}
+      <div className="flex-1 flex items-center justify-center px-4 py-12">
+        <div className="max-w-6xl mx-auto text-center">
+          
+          {/* Professional Minecraft Badge */}
+          <div className="animate-fade-in-down mb-8">
+            <div className="inline-flex items-center gap-3 professional-card px-8 py-4 mb-8">
+              <FaCube className="text-emerald-400 text-xl" />
+              <span className="text-lg font-bold text-white tracking-wide">Fade Store</span>
+            </div>
+          </div>
 
-      {/* Hero Section - ONLY this is centered */}
-      <div className="flex-1 flex items-center justify-center text-center py-20 sm:py-32 md:py-40 lg:py-52 px-4">
-        <div className="max-w-3xl">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
-            Welcome to{' '}
-            <span className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent font-mono">
-              Fade
-            </span>
-          </h1>
+          {/* Professional Hero Title */}
+          <div className="animate-fade-in-up mb-12">
+            <h1 className="text-6xl sm:text-7xl lg:text-8xl font-black leading-tight mb-8">
+              <span className="text-gradient bg-gradient-to-r from-white via-gray-100 to-white bg-clip-text text-transparent">
+                Level Up Your Minecraft
+              </span>
+              <br />
+              <span className="text-gradient bg-gradient-to-r from-pink-400 via-pink-300 to-pink-500 bg-clip-text text-transparent text-glow-green">
+                with FADE
+              </span>
+            </h1>
+          </div>
 
-          <p className="text-lg sm:text-xl lg:text-2xl max-w-2xl mx-auto mb-10 text-gray-600 dark:text-gray-300">
-            Turning Your Anime Passion Into Everyday Style<br/> One Iconic Piece at a Time.
-          </p>
+          {/* Professional Description */}
+          <div className="animate-fade-in-up mb-16" style={{ animationDelay: '0.2s' }}>
+            <p className="text-2xl sm:text-3xl font-semibold text-gray-200 mb-6 max-w-4xl mx-auto leading-relaxed">
+              Premium Minecraft Ranks & Exclusive Server Access
+            </p>
+            
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+              Unlock VIP features, custom permissions, and exclusive perks in top Minecraft servers
+            </p>
+          </div>
 
-          <div className="flex gap-4 flex-wrap justify-center">
+          {/* Professional Action Buttons */}
+          <div className="animate-fade-in-up flex gap-6 flex-wrap justify-center" style={{ animationDelay: '0.4s' }}>
             <Link
-              to="/shop"
-              className="px-6 py-2 text-white bg-blue-600 border border-blue-600 rounded hover:bg-transparent hover:text-blue-600 transition-all"
+              to="/products"
+              className="btn-primary hover-lift hover-glow flex items-center gap-3 text-lg px-8 py-4"
             >
-              Start Shopping
+              <FaGem className="text-xl" />
+              Browse Minecraft Ranks
             </Link>
             <Link
               to="/contact"
-              className="px-6 py-2 text-white bg-purple-600 border border-purple-600 rounded hover:bg-transparent hover:text-purple-600 transition-all"
+              className="btn-secondary hover-lift hover-glow flex items-center gap-3 text-lg px-8 py-4"
             >
-              Contact Us
+              <FaUsers className="text-xl" />
+              Join Server
             </Link>
           </div>
+
         </div>
       </div>
 
-      {/* Bottom Content */}
-      <div className="pb-20">
-        {/* 🔷 Feature Strip */}
-        <div className="border border-purple-600 py-8 px-6 rounded-xl max-w-6xl mx-auto shadow-lg bg-gradient-to-br from-gray-100 to-white dark:from-gray-800 dark:to-gray-900 transition mb-24">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
-            {[
-              { icon: '⚡', title: 'Fast Delivery', desc: 'Get your product within 7 days.' },
-              { icon: '🛠️', title: 'Fully Customizable', desc: 'All projects tailored exactly to your needs.' },
-              { icon: '💬', title: '24/7 Support', desc: 'We’re always here to help you.' },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-xl transition hover:scale-105 border border-transparent hover:border-blue-500 dark:hover:border-purple-500"
-              >
-                <div className="text-4xl mb-2">{item.icon}</div>
-                <h3 className="font-semibold text-lg mb-1">{item.title}</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-300">{item.desc}</p>
+      {/* Professional Features Section */}
+      <div className="py-20 px-4">
+        <div className="max-w-6xl mx-auto">
+          
+          {/* Features Grid */}
+          <div className="grid md:grid-cols-3 gap-8 mb-16">
+            <div className="professional-card hover-lift text-center p-8">
+              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center mx-auto mb-6">
+                <FaCrown className="text-2xl text-white" />
               </div>
-            ))}
-          </div>
-        </div>
+              <h3 className="text-2xl font-bold text-white mb-4">Premium Ranks</h3>
+              <p className="text-gray-300 leading-relaxed">
+                Access exclusive ranks with special permissions and unique features
+              </p>
+            </div>
 
-        {/* 🔄 How It Works */}
-        <div className="max-w-5xl mx-auto mb-10 px-2">
-          <h2 className="text-3xl font-bold text-center mb-10">How It Works</h2>
-          <div className="grid md:grid-cols-3 gap-6 text-center">
-            {[
-              { step: '1️⃣', title: 'Choose a Service', desc: 'Pick from Shop or Products tailored to your needs.' },
-              { step: '2️⃣', title: 'Place Order', desc: 'Quick checkout and instant confirmation.' },
-              { step: '3️⃣', title: 'Delivery & Support', desc: 'Your product is delivered fast with full support.' },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-xl transition hover:scale-[1.03] border border-transparent hover:border-blue-500 dark:hover:border-purple-500"
-              >
-                <div className="text-4xl mb-2">{item.step}</div>
-                <h3 className="font-bold text-lg">{item.title}</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">{item.desc}</p>
+            <div className="professional-card hover-lift text-center p-8">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-6">
+                <FaDiamond className="text-2xl text-white" />
               </div>
-            ))}
+              <h3 className="text-2xl font-bold text-white mb-4">VIP Access</h3>
+              <p className="text-gray-300 leading-relaxed">
+                Join exclusive servers with premium features and priority support
+              </p>
+            </div>
+
+            <div className="professional-card hover-lift text-center p-8">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mx-auto mb-6">
+                <FaStar className="text-2xl text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-4">Custom Perks</h3>
+              <p className="text-gray-300 leading-relaxed">
+                Unlock special abilities, items, and exclusive gameplay features
+              </p>
+            </div>
           </div>
+
+          {/* Professional CTA */}
+          <div className="text-center">
+            <div className="professional-card p-12 max-w-4xl mx-auto">
+              <h2 className="text-5xl font-bold text-gradient bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent mb-6">
+                Ready to Level Up?
+              </h2>
+              <p className="text-xl text-gray-300 mb-10 max-w-2xl mx-auto leading-relaxed">
+                Discover premium Minecraft ranks and unlock exclusive features designed for serious players
+              </p>
+              <div className="flex justify-center">
+                <Link
+                  to="/products"
+                  className="btn-primary hover-lift hover-glow flex items-center gap-3 text-xl px-10 py-5"
+                >
+                  <FaGem className="text-2xl" />
+                  View All Ranks
+                </Link>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>

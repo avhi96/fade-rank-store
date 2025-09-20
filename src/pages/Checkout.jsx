@@ -18,6 +18,17 @@ const Checkout = () => {
   const { cart: contextCart, clearCart, removeFromCart } = useCart();
   const navigate = useNavigate();
 
+  // Check for cart items immediately - prevent direct URL access
+  const buyNowItem = JSON.parse(localStorage.getItem('buyNowItem') || 'null');
+  const hasCartItems = (contextCart && contextCart.length > 0) || buyNowItem;
+  
+  // Block rendering if no cart items
+  if (!hasCartItems) {
+    toast.error('No items in cart. Please add items to proceed with checkout.');
+    navigate('/products');
+    return null;
+  }
+
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [cart, setCart] = useState([]);
@@ -34,7 +45,6 @@ const Checkout = () => {
 
   // Load cart data
   useEffect(() => {
-    const buyNowItem = JSON.parse(localStorage.getItem('buyNowItem'));
     if (contextCart && contextCart.length > 0) {
       setCart(contextCart);
     } else if (buyNowItem) {
@@ -177,7 +187,7 @@ const Checkout = () => {
           name: selectedAddress?.name,
           contact: selectedAddress?.phone,
         },
-        theme: { color: '#3399cc' },
+        theme: { color: '#CDBD9C' },
       };
 
       const rzp = new window.Razorpay(options);
