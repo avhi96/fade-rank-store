@@ -51,7 +51,7 @@ export default function Home() {
               Browse Minecraft Ranks
             </Link>
             <Link
-              to="/contact"
+              to="https://discord.gg/aq9dwKm7"
               className="btn-secondary hover-lift hover-glow flex items-center gap-3 text-lg px-8 py-4"
             >
               <FaUsers className="text-xl" />
