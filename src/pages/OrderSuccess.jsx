@@ -24,7 +24,11 @@ const OrderSuccess = () => {
   
   // Check for order data immediately - prevent direct URL access
   const orderData = location.state?.orderData || JSON.parse(localStorage.getItem('lastOrder') || 'null');
-  
+
+  // Debug: Log order data to console
+  console.log('OrderSuccess - orderData:', orderData);
+  console.log('OrderSuccess - location.state:', location.state);
+
   // Block rendering if no order data
   if (!orderData) {
     toast.error('No order data found. Please complete a purchase first.');
@@ -198,37 +202,40 @@ Thank you for choosing FADE Store!
                     <div>
                       <p className="text-sm font-medium text-green-400 mb-1">ORDER ID</p>
                       <p className="text-sm font-mono text-white bg-black/50 px-3 py-2 rounded border border-gray-700/30">
-                        order_{orderData.paymentId}
+                        order_{orderData.paymentId || 'N/A'}
                       </p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-blue-400 mb-1">AMOUNT</p>
-                      <p className="text-2xl font-bold text-green-400">₹{orderData.price}</p>
+                      <p className="text-2xl font-bold text-green-400">₹{orderData.price || 'N/A'}</p>
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm font-medium text-purple-400 mb-1">PRODUCT</p>
-                      <p className="text-sm font-semibold text-white">{orderData.productName}</p>
+                      <p className="text-sm font-semibold text-white">{orderData.productName || 'N/A'}</p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-cyan-400 mb-1">DATE & TIME</p>
                       <p className="text-sm text-gray-300">
-                        {new Date(orderData.createdAt).toLocaleString()}
+                        {orderData.createdAt ? new Date(orderData.createdAt).toLocaleString() : 'N/A'}
                       </p>
                     </div>
                   </div>
-                  
-                  <div>
-                    <p className="text-sm font-medium text-yellow-400 mb-1">MINECRAFT USERNAME</p>
-                    <p className="text-sm font-semibold text-white">{orderData.minecraftUsername}</p>
-                  </div>
-                  
+
+                  {/* Only show Minecraft username for product purchases, not cart orders */}
+                  {orderData.orderType !== 'cart' && (
+                    <div>
+                      <p className="text-sm font-medium text-yellow-400 mb-1">MINECRAFT USERNAME</p>
+                      <p className="text-sm font-semibold text-white">{orderData.minecraftUsername || 'N/A'}</p>
+                    </div>
+                  )}
+
                   <div>
                     <p className="text-sm font-medium text-orange-400 mb-1">PAYMENT ID</p>
                     <p className="text-sm font-mono text-white bg-black/50 px-3 py-2 rounded border border-gray-700/30">
-                      {orderData.paymentId}
+                      {orderData.paymentId || 'N/A'}
                     </p>
                   </div>
                 </div>

@@ -45,7 +45,7 @@ const PurchaseConfirmationModal = ({ isOpen, onClose, product }) => {
       toast.error('Please enter your Discord username');
       return;
     }
-    
+
     if (!formData.minecraftUsername.trim()) {
       toast.error('Please enter your Minecraft username');
       return;
@@ -54,49 +54,80 @@ const PurchaseConfirmationModal = ({ isOpen, onClose, product }) => {
     setLoading(true);
 
     try {
-      // Initialize Razorpay payment
+      // Call backend to create Razorpay order
+      const createOrderResponse = await fetch('https://store-backend-ten.vercel.app/api/razorpay/create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: product.price,
+          currency: 'INR',
+          userId: user.uid,
+          items: [{
+            name: product.name,
+            price: product.price,
+            quantity: 1,
+          }],
+          notes: {
+            discordUsername: formData.discordUsername.trim(),
+            minecraftUsername: formData.minecraftUsername.trim(),
+            productName: product.name
+          }
+        }),
+      });
+
+      if (!createOrderResponse.ok) {
+        throw new Error('Failed to create order');
+      }
+
+      const orderData = await createOrderResponse.json();
+
+      // Initialize Razorpay payment with order from backend
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_RJWzpQal9wjEC7',
-        amount: product.price * 100, // Amount in paise
-        currency: 'INR',
+        key: orderData.key,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        order_id: orderData.orderId,
         name: 'Fade',
         description: `Purchase ${product.name}`,
         image: 'https://images-ext-1.discordapp.net/external/SeJGRXkeIpNvC26GS-5IziN8m5hUv0g0TQViJmwvX00/%3Fsize%3D1024/https/cdn.discordapp.com/icons/1296913762493923421/c609b2dfd6a28b2d7f16b02a291c08e5.webp?format=webp&width=1006&height=1006',
         handler: async function (response) {
           try {
-            let assignedCode = null;
+            // Verify payment with backend
+            const verifyResponse = await fetch('https://store-backend-ten.vercel.app/api/razorpay/verify-payment', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                orderData: {
+                  userId: user.uid,
+                  userEmail: user.email,
+                  discordUsername: formData.discordUsername.trim(),
+                  minecraftUsername: formData.minecraftUsername.trim(),
+                  productName: product.name,
+                  productId: product.id,
+                  price: product.price,
+                  originalPrice: product.originalPrice || product.price,
+                  discount: product.discount || 0,
+                }
+              }),
+            });
 
-            // Try to assign a code for this rank
-            try {
-              const availableCodesQuery = query(
-                collection(db, 'rankCodes'),
-                where('rankId', '==', product.id),
-                where('isUsed', '==', false),
-                limit(1)
-              );
-              
-              const availableCodesSnap = await getDocs(availableCodesQuery);
-              
-              if (!availableCodesSnap.empty) {
-                const codeDoc = availableCodesSnap.docs[0];
-                assignedCode = codeDoc.data().code;
-                
-                // Mark the code as used
-                await updateDoc(doc(db, 'rankCodes', codeDoc.id), {
-                  isUsed: true,
-                  usedAt: serverTimestamp(),
-                  usedBy: user?.uid || null,
-                  userEmail: user?.email || ''
-                });
-              }
-            } catch (codeError) {
-              console.error('Error assigning code:', codeError);
+            if (!verifyResponse.ok) {
+              throw new Error('Payment verification failed');
             }
 
-            // Payment successful, create order in Firebase
-            const orderData = {
-              userId: user?.uid || null,
-              userEmail: user?.email || '',
+            const verificationResult = await verifyResponse.json();
+
+            // Construct complete order data for success page (don't rely on backend response)
+            const completeOrderData = {
+              userId: user.uid,
+              userEmail: user.email,
               discordUsername: formData.discordUsername.trim(),
               minecraftUsername: formData.minecraftUsername.trim(),
               productName: product.name,
@@ -104,31 +135,21 @@ const PurchaseConfirmationModal = ({ isOpen, onClose, product }) => {
               price: product.price,
               originalPrice: product.originalPrice || product.price,
               discount: product.discount || 0,
+              paymentId: verificationResult.paymentId,
               status: 'Completed',
-              paymentId: response.razorpay_payment_id,
-              paymentSignature: response.razorpay_signature || null,
-              assignedCode: assignedCode,
-              createdAt: serverTimestamp()
+              createdAt: new Date().toISOString()
             };
 
-            await addDoc(collection(db, 'productOrders'), orderData);
-
             // Store order data for success page
-            localStorage.setItem('lastOrder', JSON.stringify({
-              ...orderData,
-              createdAt: new Date().toISOString()
-            }));
+            localStorage.setItem('lastOrder', JSON.stringify(completeOrderData));
 
             // Close modal and navigate to success page
             onClose();
-            navigate('/order-success', { 
-              state: { orderData: {
-                ...orderData,
-                createdAt: new Date().toISOString()
-              }}
+            navigate('/order-success', {
+              state: { orderData: completeOrderData }
             });
           } catch (error) {
-            console.error('Error saving order:', error);
+            console.error('Error verifying payment:', error);
             toast.error('Payment successful but failed to save order. Please contact support.');
           }
         },

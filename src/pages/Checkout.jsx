@@ -122,11 +122,40 @@ const Checkout = () => {
     setLoading(true);
 
     try {
-      // Direct Razorpay integration with auto-capture enabled
+      // Call backend to create Razorpay order
+      const createOrderResponse = await fetch('https://store-backend-ten.vercel.app/api/razorpay/create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: total,
+          currency: 'INR',
+          userId: user.uid,
+          items: cart.map(item => ({
+            name: item.name,
+            price: getFinalPrice(item.price, item.discount),
+            quantity: item.quantity || 1,
+          })),
+          notes: {
+            address: `${selectedAddress?.addressLine}, ${selectedAddress?.city}`,
+            items: cart.map(item => item.name).join(', ')
+          }
+        }),
+      });
+
+      if (!createOrderResponse.ok) {
+        throw new Error('Failed to create order');
+      }
+
+      const orderData = await createOrderResponse.json();
+
+      // Razorpay integration with order from backend
       const options = {
-        key: 'rzp_live_RJWzpQal9wjEC7',
-        amount: Math.round(total * 100), // Amount in paise
-        currency: 'INR',
+        key: orderData.key,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        order_id: orderData.orderId,
         name: 'Fade Network',
         description: 'Payment for your order',
         image: 'https://images-ext-1.discordapp.net/external/SeJGRXkeIpNvC26GS-5IziN8m5hUv0g0TQViJmwvX00/%3Fsize%3D1024/https/cdn.discordapp.com/icons/1296913762493923421/c609b2dfd6a28b2d7f16b02a291c08e5.webp?format=webp&width=1006&height=1006',
@@ -153,6 +182,37 @@ const Checkout = () => {
         },
         handler: async function (response) {
           try {
+            // Verify payment with backend
+            const verifyResponse = await fetch('https://store-backend-ten.vercel.app/api/razorpay/verify-payment', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                orderData: {
+                  userId: user.uid,
+                  userEmail: user.email,
+                  address: selectedAddress,
+                  items: cart.map(item => ({
+                    name: item.name,
+                    image: item.images?.[0] || item.image || '',
+                    quantity: item.quantity || 1,
+                    price: getFinalPrice(item.price, item.discount),
+                    originalPrice: item.price,
+                    discount: item.discount || 0,
+                  })),
+                }
+              }),
+            });
+
+            if (!verifyResponse.ok) {
+              throw new Error('Payment verification failed');
+            }
+
+            // Save order details locally (backend handles Firebase)
             const saveOrders = cart.map(item => {
               const finalPrice = getFinalPrice(item.price, item.discount);
               const orderData = {
@@ -165,19 +225,20 @@ const Checkout = () => {
                 originalPrice: item.price,
                 discount: item.discount || 0,
                 address: selectedAddress,
-                status: 'Completed', // Changed from 'pending' to 'Completed' for successful payments
-                paymentId: response.razorpay_payment_id,
+                status: 'Completed',
+                paymentId: verificationResult.paymentId,
                 paymentSignature: response.razorpay_signature || null,
                 createdAt: serverTimestamp(),
               };
 
-              // Save to both collections
+              // Save to all collections
               return Promise.all([
                 addDoc(collection(db, 'productOrders'), orderData),
                 addDoc(collection(db, 'orders'), {
                   ...orderData,
                   type: 'shop',
-                })
+                }),
+                addDoc(collection(db, 'users', user.uid, 'orders'), orderData)
               ]);
             });
 
@@ -189,9 +250,40 @@ const Checkout = () => {
             });
             localStorage.removeItem('buyNowItem');
 
+            // Construct complete order data for success page (cart checkout)
+            const completeOrderData = {
+              userId: user.uid,
+              userEmail: user.email,
+              productName: cart.length === 1 ? cart[0].name : `${cart.length} Products`,
+              image: cart.length === 1 ? (cart[0].images?.[0] || cart[0].image || '') : '',
+              quantity: cart.length === 1 ? (cart[0].quantity || 1) : cart.length,
+              price: total,
+              originalPrice: cart.reduce((acc, item) => acc + item.price * (item.quantity || 1), 0),
+              discount: cart.reduce((acc, item) => acc + (item.discount || 0) * (item.quantity || 1), 0),
+              address: selectedAddress,
+              status: 'Completed',
+              paymentId: verificationResult.paymentId,
+              paymentSignature: response.razorpay_signature || null,
+              createdAt: new Date().toISOString(),
+              items: cart.map(item => ({
+                name: item.name,
+                image: item.images?.[0] || item.image || '',
+                quantity: item.quantity || 1,
+                price: getFinalPrice(item.price, item.discount),
+                originalPrice: item.price,
+                discount: item.discount || 0,
+              })),
+              orderType: 'cart' // Mark as cart order
+            };
+
+            // Store order data for success page
+            localStorage.setItem('lastOrder', JSON.stringify(completeOrderData));
+
             toast.success('Payment successful! Redirecting...');
             setTimeout(() => {
-              navigate('/thankyou');
+              navigate('/order-success', {
+                state: { orderData: completeOrderData }
+              });
             }, 1500);
           } catch (err) {
             console.error('Error saving order:', err);
