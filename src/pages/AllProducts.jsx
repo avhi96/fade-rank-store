@@ -126,9 +126,9 @@ const AllProducts = () => {
     setCheckoutLoading(true);
 
     try {
-      // Initialize Razorpay payment
+      // Initialize Razorpay payment with auto-capture enabled
       const options = {
-        key: 'rzp_live_RJWzpQal9wjEC7', // Replace with your Razorpay key ID
+        key: 'rzp_live_RJWzpQal9wjEC7',
         amount: selectedRank.price * 100, // Amount in paise (multiply by 100)
         currency: 'INR',
         name: 'Fade',

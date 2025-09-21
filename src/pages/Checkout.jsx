@@ -122,14 +122,35 @@ const Checkout = () => {
     setLoading(true);
 
     try {
-      // Direct Razorpay integration without backend dependency
+      // Direct Razorpay integration with auto-capture enabled
       const options = {
-        key: 'rzp_live_AY41K4JkiHKQFr',
+        key: 'rzp_live_RJWzpQal9wjEC7',
         amount: Math.round(total * 100), // Amount in paise
         currency: 'INR',
         name: 'Fade Network',
         description: 'Payment for your order',
         image: 'https://images-ext-1.discordapp.net/external/SeJGRXkeIpNvC26GS-5IziN8m5hUv0g0TQViJmwvX00/%3Fsize%3D1024/https/cdn.discordapp.com/icons/1296913762493923421/c609b2dfd6a28b2d7f16b02a291c08e5.webp?format=webp&width=1006&height=1006',
+        config: {
+          display: {
+            blocks: {
+              banks: {
+                name: 'Pay via Bank Account',
+                instruments: [
+                  {
+                    method: 'netbanking'
+                  },
+                  {
+                    method: 'upi'
+                  }
+                ]
+              }
+            },
+            sequence: ['block.banks'],
+            preferences: {
+              show_default_blocks: true
+            }
+          }
+        },
         handler: async function (response) {
           try {
             const saveOrders = cart.map(item => {

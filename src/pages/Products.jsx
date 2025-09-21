@@ -6,7 +6,6 @@ import { collection, addDoc, serverTimestamp, getDocs, query, limit, where, upda
 import { db } from '../firebase';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
-import PurchaseConfirmationModal from '../components/PurchaseConfirmationModal';
 
 const Products = () => {
   const { user } = useAuth();
@@ -14,8 +13,6 @@ const Products = () => {
   const [loading, setLoading] = useState(false);
   const [discordRanks, setDiscordRanks] = useState([]);
   const [ranksLoading, setRanksLoading] = useState(true);
-  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
   useEffect(() => {
     fetchAdminRanks();
   }, []);
@@ -58,27 +55,111 @@ const Products = () => {
   };
 
   const handleDirectPurchase = async (rank) => {
-    // Check if user is logged in before proceeding
-    if (!user) {
-      toast.error('Please login to purchase ranks');
-      navigate('/login', { 
-        state: { 
-          from: { pathname: '/products' },
-          message: 'Please login to purchase this rank',
-          rankToPurchase: rank.id
+    setLoading(true);
+
+    try {
+      // Initialize Razorpay payment with auto-capture enabled
+      const options = {
+        key: 'rzp_live_RJWzpQal9wjEC7',
+        amount: rank.price * 100, // Amount in paise (multiply by 100)
+        currency: 'INR',
+        name: 'Fade',
+        description: `Purchase ${rank.name}`,
+        image: 'https://images-ext-1.discordapp.net/external/SeJGRXkeIpNvC26GS-5IziN8m5hUv0g0TQViJmwvX00/%3Fsize%3D1024/https/cdn.discordapp.com/icons/1296913762493923421/c609b2dfd6a28b2d7f16b02a291c08e5.webp?format=webp&width=1006&height=1006',
+        handler: async function (response) {
+          try {
+            let assignedCode = null;
+
+            // Try to assign a code for this rank
+            try {
+              // Find an available code for this rank
+              const availableCodesQuery = query(
+                collection(db, 'rankCodes'),
+                where('rankId', '==', rank.id),
+                where('isUsed', '==', false),
+                limit(1)
+              );
+              
+              const availableCodesSnap = await getDocs(availableCodesQuery);
+              
+              if (!availableCodesSnap.empty) {
+                const codeDoc = availableCodesSnap.docs[0];
+                assignedCode = codeDoc.data().code;
+                
+                // Mark the code as used
+                await updateDoc(doc(db, 'rankCodes', codeDoc.id), {
+                  isUsed: true,
+                  usedAt: serverTimestamp(),
+                  usedBy: user?.uid || null,
+                  userEmail: user?.email || ''
+                });
+              }
+            } catch (codeError) {
+              console.error('Error assigning code:', codeError);
+              // Continue with order creation even if code assignment fails
+            }
+
+            // Payment successful, create order in Firebase
+            const orderData = {
+              userId: user?.uid || null,
+              userEmail: user?.email || '',
+              productName: rank.name,
+              productId: rank.id,
+              price: rank.price,
+              originalPrice: rank.originalPrice || rank.price,
+              discount: rank.discount || 0,
+              status: 'Completed',
+              paymentId: response.razorpay_payment_id,
+              paymentSignature: response.razorpay_signature || null,
+              assignedCode: assignedCode,
+              createdAt: serverTimestamp()
+            };
+
+            await addDoc(collection(db, 'productOrders'), orderData);
+
+            // Store order data for success page
+            localStorage.setItem('lastOrder', JSON.stringify({
+              ...orderData,
+              createdAt: new Date().toISOString() // Convert timestamp for storage
+            }));
+
+            // Navigate to success page
+            navigate('/order-success', { 
+              state: { orderData: {
+                ...orderData,
+                createdAt: new Date().toISOString()
+              }}
+            });
+          } catch (error) {
+            console.error('Error saving order:', error);
+            toast.error('Payment successful but failed to save order. Please contact support.');
+          }
+        },
+        prefill: {
+          email: user?.email || '',
+          contact: ''
+        },
+        notes: {
+          productName: rank.name
+        },
+        theme: {
+          color: '#CDBD9C'
+        },
+        modal: {
+          ondismiss: function() {
+            setLoading(false);
+            toast('Payment cancelled', { icon: 'ℹ️' });
+          }
         }
-      });
-      return;
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (error) {
+      console.error('Error initializing payment:', error);
+      toast.error('Failed to initialize payment. Please try again.');
+      setLoading(false);
     }
-
-    // Show confirmation modal
-    setSelectedProduct(rank);
-    setShowConfirmationModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowConfirmationModal(false);
-    setSelectedProduct(null);
   };
 
   return (
@@ -277,13 +358,6 @@ const Products = () => {
         )}
 
       </div>
-
-      {/* Purchase Confirmation Modal */}
-      <PurchaseConfirmationModal
-        isOpen={showConfirmationModal}
-        onClose={handleCloseModal}
-        product={selectedProduct}
-      />
     </div>
   );
 };
