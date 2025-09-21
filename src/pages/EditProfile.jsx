@@ -204,7 +204,7 @@ const EditProfile = () => {
       </div>
 
       {/* Professional Edit Form Section */}
-      <div className="py-20 px-4">
+      <div className="px-4">
         <div className="max-w-2xl mx-auto">
           
           <div className="professional-card p-8">

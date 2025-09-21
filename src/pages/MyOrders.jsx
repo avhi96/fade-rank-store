@@ -61,8 +61,7 @@ const MyOrders = () => {
         // Fetch from productOrders collection
         const productOrdersQuery = query(
           collection(db, 'productOrders'),
-          where('userId', '==', user.uid),
-          orderBy('createdAt', 'desc')
+          where('userId', '==', user.uid)
         );
         const productOrdersSnapshot = await getDocs(productOrdersQuery);
         const productOrders = productOrdersSnapshot.docs.map(doc => ({
@@ -74,8 +73,7 @@ const MyOrders = () => {
         // Fetch from root-level 'orders' collection filtered by userId
         const ordersQuery = query(
           collection(db, 'orders'),
-          where('userId', '==', user.uid),
-          orderBy('createdAt', 'desc')
+          where('userId', '==', user.uid)
         );
         const ordersSnapshot = await getDocs(ordersQuery);
         const rootOrders = ordersSnapshot.docs.map(doc => ({
@@ -84,8 +82,12 @@ const MyOrders = () => {
           type: 'item',
         }));
 
-        // Merge all arrays - no sample data
-        const allOrders = [...userOrders, ...productOrders, ...rootOrders];
+        // Merge all arrays and sort by createdAt in JavaScript
+        const allOrders = [...userOrders, ...productOrders, ...rootOrders].sort((a, b) => {
+          const aTime = a.createdAt?.toDate?.() || new Date(a.createdAt || 0);
+          const bTime = b.createdAt?.toDate?.() || new Date(b.createdAt || 0);
+          return bTime - aTime; // Descending order
+        });
         setOrders(allOrders);
       } catch (err) {
         console.error('Error fetching orders:', err);
@@ -271,7 +273,7 @@ Visit us again for more Minecraft ranks!
       </div>
 
       {/* Professional Features Section */}
-      <div className="py-20 px-4">
+      <div className=" px-4">
         <div className="max-w-6xl mx-auto">
           
           {/* Tab Navigation */}

@@ -171,8 +171,20 @@ const PurchaseConfirmationModal = ({ isOpen, onClose, product }) => {
         }
       };
 
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+      try {
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      } catch (razorpayError) {
+        console.error('Razorpay initialization error:', razorpayError);
+        if (razorpayError.message && razorpayError.message.includes('otp-credentials')) {
+          toast.error('Browser extension conflict detected. Please disable cryptocurrency wallet extensions or try in incognito mode.', {
+            duration: 8000,
+          });
+        } else {
+          toast.error('Payment initialization failed. Please try again or contact support.');
+        }
+        setLoading(false);
+      }
     } catch (error) {
       console.error('Error initializing payment:', error);
       toast.error('Failed to initialize payment. Please try again.');
