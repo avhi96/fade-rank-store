@@ -8,18 +8,14 @@ import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
 
 const Products = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [discordRanks, setDiscordRanks] = useState([]);
   const [ranksLoading, setRanksLoading] = useState(true);
-  
   useEffect(() => {
-    // Wait for auth to initialize before fetching ranks
-    if (!authLoading) {
-      fetchAdminRanks();
-    }
-  }, [authLoading]);
+    fetchAdminRanks();
+  }, []);
 
   const fetchAdminRanks = async () => {
     try {
@@ -35,24 +31,9 @@ const Products = () => {
         .sort((a, b) => b.price - a.price); // Sort by price high to low
 
       setDiscordRanks(adminRanks);
-      
-      // Only show success message if we actually got data
-      if (adminRanks.length > 0) {
-        console.log(`Successfully loaded ${adminRanks.length} ranks`);
-      }
     } catch (error) {
       console.error('Error fetching ranks:', error);
-      
-      // More specific error handling
-      if (error.code === 'permission-denied') {
-        console.warn('Permission denied - Firebase security rules may need adjustment for public read access');
-        toast.error('Unable to load ranks. Please contact support.');
-      } else if (error.code === 'unavailable') {
-        toast.error('Service temporarily unavailable. Please try again later.');
-      } else {
-        toast.error('Failed to load ranks. Please refresh the page.');
-      }
-      
+      toast.error('Failed to load ranks');
       setDiscordRanks([]);
     } finally {
       setRanksLoading(false);
@@ -74,20 +55,6 @@ const Products = () => {
   };
 
   const handleDirectPurchase = async (rank) => {
-    // Check if user is logged in before proceeding with purchase
-    if (!user) {
-      toast.error('Please login to purchase ranks');
-      // Redirect to login page with current location as return URL
-      navigate('/login', { 
-        state: { 
-          from: { pathname: '/products' },
-          message: 'Please login to purchase this rank',
-          rankToPurchase: rank.id
-        } 
-      });
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -222,41 +189,23 @@ const Products = () => {
         </div>
 
         {/* Loading State */}
-        {authLoading || ranksLoading ? (
+        {ranksLoading ? (
           <div className="text-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">
-              {authLoading ? 'Initializing...' : 'Loading Minecraft ranks...'}
-            </p>
+            <p className="text-gray-600 dark:text-gray-400">Loading Discord ranks...</p>
           </div>
         ) : discordRanks.length === 0 ? (
           <div className="text-center py-20">
             <FaCrown className="text-6xl text-gray-400 mx-auto mb-4" />
             <h3 className="text-2xl font-bold text-gray-600 dark:text-gray-400 mb-2">No Ranks Available</h3>
-            <p className="text-gray-500 dark:text-gray-500 mb-6">
-              {!user ? 
-                'Ranks are loading. If this persists, please try logging in or contact support.' :
-                'Admin hasn\'t added any Minecraft ranks yet'
-              }
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <button
-                onClick={fetchAdminRanks}
-                className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors inline-flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-                </svg>
-                Retry Loading
-              </button>
-              <Link
-                to="/products/all"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors inline-flex items-center gap-2"
-              >
-                <FaShoppingCart />
-                Browse All Products
-              </Link>
-            </div>
+            <p className="text-gray-500 dark:text-gray-500 mb-6">Admin hasn't added any Minecraft ranks yet</p>
+            <Link
+              to="/products/all"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors inline-flex items-center gap-2"
+            >
+              <FaShoppingCart />
+              Browse All Products
+            </Link>
           </div>
         ) : (
           /* Professional Product Cards Grid */
@@ -384,7 +333,7 @@ const Products = () => {
                         </div>
                       </div>
 
-                      {/* Ultra Premium CTA Button with Login Check */}
+                      {/* Ultra Premium CTA Button */}
                       <button
                         onClick={() => handleDirectPurchase(rank)}
                         className={`w-full bg-gradient-to-r ${cardColor} hover:shadow-2xl text-white font-black py-5 px-10 rounded-2xl transition-all duration-500 hover:scale-105 active:scale-95 shadow-xl flex items-center justify-center gap-4 text-xl group/btn relative overflow-hidden`}
@@ -392,40 +341,14 @@ const Products = () => {
                         {/* Button Shine Effect */}
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000"></div>
                         
-                        {user ? (
-                          <>
-                            <svg className="w-7 h-7 group-hover/btn:scale-110 transition-transform duration-300 relative z-10" fill="currentColor" viewBox="0 0 20 20">
-                              <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
-                            </svg>
-                            <span className="tracking-wide font-black relative z-10">Purchase Now</span>
-                            <svg className="w-7 h-7 group-hover/btn:translate-x-1 transition-transform duration-300 relative z-10" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                            </svg>
-                          </>
-                        ) : (
-                          <>
-                            <svg className="w-7 h-7 group-hover/btn:scale-110 transition-transform duration-300 relative z-10" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M3 3a1 1 0 011 1v12a1 1 0 11-2 0V4a1 1 0 011-1zm7.707 3.293a1 1 0 010 1.414L9.414 9H17a1 1 0 110 2H9.414l1.293 1.293a1 1 0 01-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                            <span className="tracking-wide font-black relative z-10">Login to Purchase</span>
-                            <svg className="w-7 h-7 group-hover/btn:translate-x-1 transition-transform duration-300 relative z-10" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                            </svg>
-                          </>
-                        )}
+                        <svg className="w-7 h-7 group-hover/btn:scale-110 transition-transform duration-300 relative z-10" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
+                        </svg>
+                        <span className="tracking-wide font-black relative z-10">Purchase Now</span>
+                        <svg className="w-7 h-7 group-hover/btn:translate-x-1 transition-transform duration-300 relative z-10" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
                       </button>
-                      
-                      {/* Login Notice for Non-Authenticated Users */}
-                      {!user && (
-                        <div className="mt-4 text-center">
-                          <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center justify-center gap-2">
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                            </svg>
-                            Login required to purchase this rank
-                          </p>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>

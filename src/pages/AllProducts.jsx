@@ -231,27 +231,6 @@ const AllProducts = () => {
         modal: {
           ondismiss: function() {
             setCheckoutLoading(false);
-            
-            // Create cancelled order data
-            const cancelledOrderData = {
-              userId: user?.uid || null,
-              userEmail: checkoutForm.email,
-              minecraftUsername: checkoutForm.minecraftUsername,
-              discordUsername: checkoutForm.discordUsername,
-              productName: selectedRank.name,
-              productId: selectedRank.id,
-              price: selectedRank.price,
-              originalPrice: selectedRank.originalPrice || selectedRank.price,
-              discount: selectedRank.discount || 0,
-              status: 'Cancelled',
-              paymentId: null,
-              createdAt: new Date().toISOString()
-            };
-
-            // Store cancelled order data
-            localStorage.setItem('lastOrder', JSON.stringify(cancelledOrderData));
-
-            // Close checkout modal
             setShowCheckout(false);
             setSelectedRank(null);
             setCheckoutForm({
@@ -259,11 +238,7 @@ const AllProducts = () => {
               email: '',
               discordUsername: ''
             });
-
-            // Navigate to cancel page
-            navigate('/order-cancel', { 
-              state: { orderData: cancelledOrderData }
-            });
+            toast('Payment cancelled', { icon: 'ℹ️' });
           }
         }
       };

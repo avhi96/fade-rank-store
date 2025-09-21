@@ -122,21 +122,14 @@ const Checkout = () => {
     setLoading(true);
 
     try {
-      const res = await fetch('https://fadebackend.onrender.com/create-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: Math.round(total * 100) }),
-      });
-
-      const orderData = await res.json();
-
+      // Direct Razorpay integration without backend dependency
       const options = {
         key: 'rzp_live_AY41K4JkiHKQFr',
-        amount: orderData.amount,
-        currency: orderData.currency,
+        amount: Math.round(total * 100), // Amount in paise
+        currency: 'INR',
         name: 'Fade Network',
         description: 'Payment for your order',
-        order_id: orderData.id,
+        image: 'https://images-ext-1.discordapp.net/external/SeJGRXkeIpNvC26GS-5IziN8m5hUv0g0TQViJmwvX00/%3Fsize%3D1024/https/cdn.discordapp.com/icons/1296913762493923421/c609b2dfd6a28b2d7f16b02a291c08e5.webp?format=webp&width=1006&height=1006',
         handler: async function (response) {
           try {
             const saveOrders = cart.map(item => {
@@ -151,8 +144,9 @@ const Checkout = () => {
                 originalPrice: item.price,
                 discount: item.discount || 0,
                 address: selectedAddress,
-                status: 'pending',
-                razorpay_payment_id: response.razorpay_payment_id,
+                status: 'Completed', // Changed from 'pending' to 'Completed' for successful payments
+                paymentId: response.razorpay_payment_id,
+                paymentSignature: response.razorpay_signature || null,
                 createdAt: serverTimestamp(),
               };
 
@@ -179,25 +173,35 @@ const Checkout = () => {
               navigate('/thankyou');
             }, 1500);
           } catch (err) {
-            console.error(err);
-            toast.error('Payment succeeded but order save failed');
+            console.error('Error saving order:', err);
+            toast.error('Payment successful but failed to save order. Please contact support.');
           }
         },
         prefill: {
           name: selectedAddress?.name,
+          email: user?.email || '',
           contact: selectedAddress?.phone,
         },
+        notes: {
+          address: `${selectedAddress?.addressLine}, ${selectedAddress?.city}`,
+          items: cart.map(item => item.name).join(', ')
+        },
         theme: { color: '#CDBD9C' },
+        modal: {
+          ondismiss: function() {
+            setLoading(false);
+            toast('Payment cancelled', { icon: 'ℹ️' });
+          }
+        }
       };
 
       const rzp = new window.Razorpay(options);
       rzp.open();
     } catch (error) {
-      console.error(error);
-      toast.error('Something went wrong during payment');
+      console.error('Error initializing payment:', error);
+      toast.error('Failed to initialize payment. Please try again.');
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   if (!user) {
