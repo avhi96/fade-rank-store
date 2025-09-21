@@ -18,6 +18,14 @@ VITE_FIREBASE_MEASUREMENT_ID=G-N7S58YEDTH
 VITE_RAZORPAY_KEY_ID=rzp_live_RJWzpQal9wjEC7
 VITE_RAZORPAY_KEY_ID_BACKUP=rzp_live_AY41K4JkiHKQFr
 
+# Razorpay Webhook Configuration (for serverless webhook endpoint)
+RAZORPAY_WEBHOOK_SECRET=your_webhook_secret_from_razorpay_dashboard
+
+# Firebase Admin SDK Configuration (for webhook server-side operations)
+FIREBASE_PROJECT_ID=fademart-32de5
+FIREBASE_CLIENT_EMAIL=your_firebase_service_account_email
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nyour_firebase_private_key\n-----END PRIVATE KEY-----"
+
 # Discord Integration (from src/pages/Contact.jsx)
 VITE_DISCORD_WEBHOOK_CONTACT=https://discordapp.com/api/webhooks/1418606148797464767/ifUqOdiHqJqmIq_T1gQxiFsvVq4KcVCECEfYTLkcr1aRtDDmXAyC03gYJzn1ZBD4b_n1
 
