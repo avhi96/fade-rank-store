@@ -154,6 +154,7 @@ const Admin = () => {
           status: orderData.status || 'Pending',
           createdAt: orderData.createdAt,
           discordUsername: orderData.discordUsername || 'Not provided',
+          minecraftUsername: orderData.minecraftUsername || 'Not provided',
           assignedCode: orderData.assignedCode || null
         });
       });
@@ -578,8 +579,16 @@ const Admin = () => {
                               {purchase.discordUsername && (
                                 <div>
                                   <p className="text-sm text-gray-600 dark:text-gray-400">Discord Username</p>
-                                  <p className="font-semibold text-gray-900 dark:text-white">
+                                  <p className="font-semibold text-gray-900 dark:text-white bg-purple-50 dark:bg-purple-900/20 px-2 py-1 rounded">
                                     {purchase.discordUsername}
+                                  </p>
+                                </div>
+                              )}
+                              {purchase.minecraftUsername && (
+                                <div>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400">Minecraft Username</p>
+                                  <p className="font-semibold text-gray-900 dark:text-white bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded">
+                                    {purchase.minecraftUsername}
                                   </p>
                                 </div>
                               )}
@@ -1202,10 +1211,13 @@ const Admin = () => {
                       <p><strong>Email:</strong> {selectedPurchase.userEmail}</p>
                       <p><strong>Username:</strong> {users[selectedPurchase.userId]?.username || 'Unknown'}</p>
                       {selectedPurchase.discordUsername && (
-                        <p><strong>Discord Username:</strong> {selectedPurchase.discordUsername}</p>
+                        <p><strong>Discord Username:</strong> <span className="bg-purple-100 dark:bg-purple-900/30 px-2 py-1 rounded text-purple-800 dark:text-purple-300">{selectedPurchase.discordUsername}</span></p>
+                      )}
+                      {selectedPurchase.minecraftUsername && (
+                        <p><strong>Minecraft Username:</strong> <span className="bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded text-green-800 dark:text-green-300">{selectedPurchase.minecraftUsername}</span></p>
                       )}
                       {selectedPurchase.assignedCode && (
-                        <p><strong>Assigned Code:</strong> <span className="font-mono bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded text-green-800 dark:text-green-300">{selectedPurchase.assignedCode}</span></p>
+                        <p><strong>Assigned Code:</strong> <span className="font-mono bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded text-blue-800 dark:text-blue-300">{selectedPurchase.assignedCode}</span></p>
                       )}
                     </div>
                   </div>
