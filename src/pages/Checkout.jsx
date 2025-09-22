@@ -42,6 +42,7 @@ const Checkout = () => {
     state: '',
     pincode: '',
   });
+  const [userProfile, setUserProfile] = useState(null);
 
   // Load cart data
   useEffect(() => {
@@ -54,10 +55,24 @@ const Checkout = () => {
     }
   }, [contextCart]);
 
-  // Load saved addresses
+  // Load saved addresses and user profile
   useEffect(() => {
-    if (user) fetchAddresses();
+    if (user) {
+      fetchAddresses();
+      fetchUserProfile();
+    }
   }, [user]);
+
+  const fetchUserProfile = async () => {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()) {
+        setUserProfile(userDoc.data());
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
 
   const fetchAddresses = async () => {
     try {
@@ -195,6 +210,7 @@ const Checkout = () => {
                 orderData: {
                   userId: user.uid,
                   userEmail: user.email,
+                  username: userProfile?.username || user.displayName || 'Unknown',
                   address: selectedAddress,
                   items: cart.map(item => ({
                     name: item.name,
@@ -212,37 +228,7 @@ const Checkout = () => {
               throw new Error('Payment verification failed');
             }
 
-            // Save order details locally (backend handles Firebase)
-            const saveOrders = cart.map(item => {
-              const finalPrice = getFinalPrice(item.price, item.discount);
-              const orderData = {
-                userId: user.uid,
-                userEmail: user.email,
-                productName: item.name,
-                image: item.images?.[0] || item.image || '',
-                quantity: item.quantity || 1,
-                price: finalPrice,
-                originalPrice: item.price,
-                discount: item.discount || 0,
-                address: selectedAddress,
-                status: 'Completed',
-                paymentId: verificationResult.paymentId,
-                paymentSignature: response.razorpay_signature || null,
-                createdAt: serverTimestamp(),
-              };
-
-              // Save to all collections
-              return Promise.all([
-                addDoc(collection(db, 'productOrders'), orderData),
-                addDoc(collection(db, 'orders'), {
-                  ...orderData,
-                  type: 'shop',
-                }),
-                addDoc(collection(db, 'users', user.uid, 'orders'), orderData)
-              ]);
-            });
-
-            await Promise.all(saveOrders);
+            const verificationResult = await verifyResponse.json();
 
             // Remove ordered items from cart
             cart.forEach(item => {
@@ -251,6 +237,7 @@ const Checkout = () => {
             localStorage.removeItem('buyNowItem');
 
             // Construct complete order data for success page (cart checkout)
+            // Note: assignedCode will be assigned by webhook asynchronously
             const completeOrderData = {
               userId: user.uid,
               userEmail: user.email,
@@ -261,9 +248,10 @@ const Checkout = () => {
               originalPrice: cart.reduce((acc, item) => acc + item.price * (item.quantity || 1), 0),
               discount: cart.reduce((acc, item) => acc + (item.discount || 0) * (item.quantity || 1), 0),
               address: selectedAddress,
-              status: 'Completed',
+              status: 'Processing', // Initial status, webhook will update to Completed
               paymentId: verificationResult.paymentId,
               paymentSignature: response.razorpay_signature || null,
+              assignedCode: null, // Will be set by webhook
               createdAt: new Date().toISOString(),
               items: cart.map(item => ({
                 name: item.name,
@@ -286,8 +274,8 @@ const Checkout = () => {
               });
             }, 1500);
           } catch (err) {
-            console.error('Error saving order:', err);
-            toast.error('Payment successful but failed to save order. Please contact support.');
+            console.error('Error processing payment:', err);
+            toast.error('Payment verification failed. Please contact support.');
           }
         },
         prefill: {

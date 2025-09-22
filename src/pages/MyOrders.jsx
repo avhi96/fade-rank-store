@@ -59,31 +59,37 @@ const MyOrders = () => {
         }));
 
         // Fetch from productOrders collection
-        const productOrdersQuery = query(
-          collection(db, 'productOrders'),
-          where('userId', '==', user.uid)
-        );
-        const productOrdersSnapshot = await getDocs(productOrdersQuery);
-        const productOrders = productOrdersSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          type: 'product',
-        }));
+        const productOrdersSnap = await getDocs(collection(db, 'productOrders'));
+        const productOrders = productOrdersSnap.docs
+          .map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            type: 'product',
+          }))
+          .filter(order => order.userId === user.uid);
 
-        // Fetch from root-level 'orders' collection filtered by userId
-        const ordersQuery = query(
-          collection(db, 'orders'),
-          where('userId', '==', user.uid)
-        );
-        const ordersSnapshot = await getDocs(ordersQuery);
-        const rootOrders = ordersSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          type: 'item',
-        }));
+        // Fetch from root-level 'orders' collection
+        const ordersSnap = await getDocs(collection(db, 'orders'));
+        const rootOrders = ordersSnap.docs
+          .map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            type: 'item',
+          }))
+          .filter(order => order.userId === user.uid);
+
+        // Fetch from razorpayOrders collection
+        const razorpayOrdersSnap = await getDocs(collection(db, 'razorpayOrders'));
+        const razorpayOrders = razorpayOrdersSnap.docs
+          .map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            type: 'razorpay',
+          }))
+          .filter(order => order.userId === user.uid);
 
         // Merge all arrays and sort by createdAt in JavaScript
-        const allOrders = [...userOrders, ...productOrders, ...rootOrders].sort((a, b) => {
+        const allOrders = [...userOrders, ...productOrders, ...rootOrders, ...razorpayOrders].sort((a, b) => {
           const aTime = a.createdAt?.toDate?.() || new Date(a.createdAt || 0);
           const bTime = b.createdAt?.toDate?.() || new Date(b.createdAt || 0);
           return bTime - aTime; // Descending order
@@ -140,9 +146,9 @@ Customer: ${user?.displayName || 'User'} (${user?.email})
 PRODUCT INFORMATION
 ═══════════════════════════════════════
 Product: ${order.productName || order.items?.[0]?.name || 'Minecraft Rank'}
-Price: ₹${Number(order.price || 0).toFixed(2)}
+Price: ₹${Number(order.amount || order.price || 0).toFixed(2)}
 Status: ${order.status || 'Pending'}
-Type: ${order.type === 'product' ? 'Minecraft Rank' : 'Item'}
+Type: ${order.type === 'product' || order.type === 'razorpay' ? 'Minecraft Rank' : 'Item'}
 
 ${order.assignedCode ? `MINECRAFT RANK CODE
 ═══════════════════════════════════════
@@ -158,7 +164,7 @@ REDEMPTION INSTRUCTIONS
 PAYMENT INFORMATION
 ═══════════════════════════════════════
 Payment Method: UPI / Razorpay
-Total Amount: ₹${Number(order.price || 0).toFixed(2)}
+Total Amount: ₹${Number(order.amount || order.price || 0).toFixed(2)}
 
 ═══════════════════════════════════════
 Thank you for choosing FADE Store!
@@ -207,8 +213,8 @@ Visit us again for more Minecraft ranks!
 
   const filteredOrders = orders.filter(order => {
     if (activeTab === 'all') return true;
-    if (activeTab === 'completed') return order.status === 'completed';
-    if (activeTab === 'codes') return order.assignedCode;
+    if (activeTab === 'completed') return order.status?.toLowerCase() === 'completed';
+    if (activeTab === 'codes') return order.assignedCode && order.assignedCode.trim() !== '';
     return true;
   });
 
@@ -361,7 +367,7 @@ Visit us again for more Minecraft ranks!
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-3xl font-bold text-emerald-400 mb-1">₹{Number(order.price || 0).toFixed(2)}</p>
+                        <p className="text-3xl font-bold text-emerald-400 mb-1">₹{Number(order.amount || order.price || 0).toFixed(2)}</p>
                         <p className="text-gray-400">
                           {order.createdAt && order.createdAt.toDate ? order.createdAt.toDate().toLocaleDateString() : 'N/A'}
                         </p>
@@ -387,7 +393,7 @@ Visit us again for more Minecraft ranks!
                           <FaCube className="text-blue-400 text-xl" />
                           <span className="text-white font-semibold text-lg">Type:</span>
                           <span className="px-4 py-2 bg-blue-500/20 text-blue-400 rounded-full font-medium border border-blue-500/30">
-                            {order.type === 'product' ? 'Minecraft Rank' : 'Item'}
+                            {order.type === 'product' || order.type === 'razorpay' ? 'Minecraft Rank' : 'Item'}
                           </span>
                         </div>
 

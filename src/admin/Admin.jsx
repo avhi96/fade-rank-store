@@ -118,21 +118,28 @@ const Admin = () => {
       // Fetch all purchases
       const allPurchases = [];
 
-      // Fetch shop orders
-      const shopOrdersSnap = await getDocs(collection(db, 'orders'));
-      shopOrdersSnap.docs.forEach(doc => {
+      // Fetch razorpay orders
+      const razorpayOrdersSnap = await getDocs(collection(db, 'razorpayOrders'));
+      razorpayOrdersSnap.docs.forEach(doc => {
         const orderData = doc.data();
+        const notes = orderData.notes || {};
         allPurchases.push({
           id: doc.id,
-          type: 'Shop Order',
+          type: 'Discord Rank',
           userId: orderData.userId,
-          userEmail: orderData.userEmail || 'Not provided',
-          items: orderData.items || [],
-          totalAmount: orderData.items?.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0,
+          userEmail: users[orderData.userId]?.email || orderData.userEmail || orderData.email || notes.customerEmail || 'Not provided',
+          username: users[orderData.userId]?.username || 'Not provided',
+          items: [{
+            name: orderData.productName || orderData.name || notes.productName || 'Discord Rank',
+            price: orderData.price || orderData.amount || 0,
+            quantity: 1
+          }],
+          totalAmount: orderData.price || orderData.amount || 0,
           status: orderData.status || 'Pending',
           createdAt: orderData.createdAt,
-          address: orderData.address,
-          paymentMethod: orderData.paymentMethod || 'Not specified'
+          discordUsername: orderData.discordUsername || notes.discordUsername || 'Not provided',
+          minecraftUsername: orderData.minecraftUsername || notes.minecraftUsername || 'Not provided',
+          assignedCode: orderData.assignedCode || null
         });
       });
 
@@ -282,8 +289,7 @@ const Admin = () => {
 
   const updateOrderStatus = async (orderId, newStatus, orderType) => {
     try {
-      const collection_name = orderType === 'Discord Rank' ? 'productOrders' : 'orders';
-      await updateDoc(doc(db, collection_name, orderId), { status: newStatus });
+      await updateDoc(doc(db, 'razorpayOrders', orderId), { status: newStatus });
       toast.success(`Order status updated to ${newStatus}`);
       fetchAllData();
     } catch (error) {
@@ -294,10 +300,9 @@ const Admin = () => {
 
   const deleteOrder = async (orderId, orderType) => {
     if (!window.confirm('Are you sure you want to delete this order?')) return;
-    
+
     try {
-      const collection_name = orderType === 'Discord Rank' ? 'productOrders' : 'orders';
-      await deleteDoc(doc(db, collection_name, orderId));
+      await deleteDoc(doc(db, 'razorpayOrders', orderId));
       toast.success('Order deleted successfully');
       fetchAllData();
     } catch (error) {
@@ -520,6 +525,24 @@ const Admin = () => {
                     <option value="completed">Completed</option>
                   </select>
                 </div>
+                <button
+                  onClick={fetchAllData}
+                  disabled={loading}
+                  className="px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 min-w-[120px]"
+                  title="Refresh order list"
+                >
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      <FaSearch className="text-sm" />
+                      Refresh
+                    </>
+                  )}
+                </button>
               </div>
             </div>
 
@@ -570,10 +593,10 @@ const Admin = () => {
                                 </p>
                               </div>
                               <div>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">Username</p>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">Profile Username</p>
                                 <p className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                                   <FaUsers className="text-gray-400" />
-                                  {users[purchase.userId]?.username || 'Unknown'}
+                                  {purchase.username}
                                 </p>
                               </div>
                               {purchase.discordUsername && (

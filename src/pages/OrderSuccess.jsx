@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { 
-  FaCheckCircle, 
-  FaCopy, 
-  FaDownload, 
-  FaDiscord, 
-  FaHome, 
+import {
+  FaCheckCircle,
+  FaCopy,
+  FaDownload,
+  FaDiscord,
+  FaHome,
   FaShoppingBag,
   FaGift,
   FaCrown,
@@ -16,6 +16,8 @@ import {
   FaCube
 } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
+import { db } from '../firebase';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import OrderProcessingAnimation from '../components/OrderProcessingAnimation';
 
 const OrderSuccess = () => {
@@ -39,11 +41,89 @@ const OrderSuccess = () => {
   const [showProcessingAnimation, setShowProcessingAnimation] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
   const [animationStep, setAnimationStep] = useState(0);
+  const [updatedOrderData, setUpdatedOrderData] = useState(orderData);
   const [processingSteps, setProcessingSteps] = useState([
     { id: 1, title: 'Payment Confirmed', description: 'Your payment has been successfully processed and confirmed. You\'ll receive an email receipt shortly.', status: 'loading', icon: FaCreditCard },
     { id: 2, title: 'Rank Provisioned', description: 'Your Minecraft rank has been automatically set up and is now active in your account.', status: 'pending', icon: FaCrown },
     { id: 3, title: 'Ready to Use', description: 'Access your Minecraft server to enjoy your new rank privileges and exclusive features.', status: 'pending', icon: FaRocket }
   ]);
+
+  // Fetch updated order data with code during processing animation
+  useEffect(() => {
+    if (!showProcessingAnimation || !orderData?.paymentId) return;
+
+    const fetchUpdatedOrder = async () => {
+      try {
+        console.log('Fetching updated order data for paymentId:', orderData.paymentId);
+
+        // Wait a bit for webhook to process
+        await new Promise(resolve => setTimeout(resolve, 5000));
+
+        // Try to fetch from razorpayOrders collection first
+        const razorpayOrdersRef = collection(db, 'razorpayOrders');
+        const razorpayQuery = query(razorpayOrdersRef, where('paymentId', '==', orderData.paymentId));
+        const razorpaySnapshot = await getDocs(razorpayQuery);
+
+        console.log('Razorpay orders found:', razorpaySnapshot.size);
+
+        if (!razorpaySnapshot.empty) {
+          const updatedOrder = razorpaySnapshot.docs[0].data();
+          console.log('Razorpay order data:', updatedOrder);
+          console.log('Assigned code in razorpay order:', updatedOrder.assignedCode);
+
+          if (updatedOrder.assignedCode) {
+            console.log('Found updated order with code:', updatedOrder.assignedCode);
+            setUpdatedOrderData({ ...orderData, ...updatedOrder });
+            return;
+          }
+        }
+
+        // Fallback to productOrders collection
+        const productOrdersRef = collection(db, 'productOrders');
+        const productQuery = query(productOrdersRef, where('paymentId', '==', orderData.paymentId));
+        const productSnapshot = await getDocs(productQuery);
+
+        console.log('Product orders found:', productSnapshot.size);
+
+        if (!productSnapshot.empty) {
+          const updatedOrder = productSnapshot.docs[0].data();
+          console.log('Product order data:', updatedOrder);
+          console.log('Assigned code in product order:', updatedOrder.assignedCode);
+
+          if (updatedOrder.assignedCode) {
+            console.log('Found updated order with code in productOrders:', updatedOrder.assignedCode);
+            setUpdatedOrderData({ ...orderData, ...updatedOrder });
+            return;
+          }
+        }
+
+        // Also check the root 'orders' collection
+        const ordersRef = collection(db, 'orders');
+        const ordersQuery = query(ordersRef, where('paymentId', '==', orderData.paymentId));
+        const ordersSnapshot = await getDocs(ordersQuery);
+
+        console.log('Root orders found:', ordersSnapshot.size);
+
+        if (!ordersSnapshot.empty) {
+          const updatedOrder = ordersSnapshot.docs[0].data();
+          console.log('Root order data:', updatedOrder);
+          console.log('Assigned code in root order:', updatedOrder.assignedCode);
+
+          if (updatedOrder.assignedCode) {
+            console.log('Found updated order with code in orders:', updatedOrder.assignedCode);
+            setUpdatedOrderData({ ...orderData, ...updatedOrder });
+          }
+        }
+
+        console.log('Final updatedOrderData:', updatedOrderData);
+
+      } catch (error) {
+        console.error('Error fetching updated order:', error);
+      }
+    };
+
+    fetchUpdatedOrder();
+  }, [showProcessingAnimation, orderData?.paymentId]);
 
   const handleAnimationComplete = () => {
     setShowProcessingAnimation(false);
@@ -332,7 +412,7 @@ Thank you for choosing FADE Store!
               </div>
 
               {/* Discord Code Section */}
-              {orderData.assignedCode && (
+              {updatedOrderData.assignedCode && (
                 <div className={`transform transition-all duration-1000 delay-700 ${animationStep >= 3 ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
                   <div className="bg-gradient-to-br from-gray-900/95 to-black/95 backdrop-blur-xl rounded-lg border border-purple-500/30 shadow-2xl shadow-purple-500/10 overflow-hidden hover:border-purple-400/50 transition-all duration-300">
                     <div className="px-6 py-4 border-b border-purple-500/30 bg-gradient-to-r from-purple-900/30 to-indigo-900/30">
@@ -343,15 +423,15 @@ Thank you for choosing FADE Store!
                         <h2 className="text-xl font-semibold text-white">Minecraft Rank Code</h2>
                       </div>
                     </div>
-                    
+
                     <div className="p-6">
                       <div className="bg-black/50 rounded-lg p-4 border border-purple-500/20 mb-4 shadow-inner">
                         <div className="flex items-center justify-between">
                           <code className="text-lg font-mono font-bold text-purple-300 tracking-wider">
-                            {orderData.assignedCode}
+                            {updatedOrderData.assignedCode}
                           </code>
                           <button
-                            onClick={() => copyToClipboard(orderData.assignedCode)}
+                            onClick={() => copyToClipboard(updatedOrderData.assignedCode)}
                             className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all duration-300 hover:scale-105 shadow-lg shadow-purple-500/25 text-sm font-medium"
                           >
                             <FaCopy className="text-sm" />
@@ -359,7 +439,7 @@ Thank you for choosing FADE Store!
                           </button>
                         </div>
                       </div>
-                      
+
                       <div className="bg-gradient-to-r from-purple-500/10 to-indigo-500/10 border border-purple-500/20 rounded-lg p-4">
                         <h4 className="text-purple-300 font-semibold mb-3 flex items-center gap-2 text-sm">
                           <FaGift className="animate-bounce" />
@@ -376,7 +456,7 @@ Thank you for choosing FADE Store!
                           </li>
                           <li className="flex items-start gap-2">
                             <span className="w-5 h-5 bg-purple-500 text-white rounded-full flex items-center justify-center text-xs font-bold mt-0.5">3</span>
-                            <span>Type: <code className="bg-black/50 px-2 py-1 rounded text-xs font-mono text-purple-300 border border-purple-500/20">/redeem {orderData.assignedCode}</code></span>
+                            <span>Type: <code className="bg-black/50 px-2 py-1 rounded text-xs font-mono text-purple-300 border border-purple-500/20">/redeem {updatedOrderData.assignedCode}</code></span>
                           </li>
                           <li className="flex items-start gap-2">
                             <span className="w-5 h-5 bg-purple-500 text-white rounded-full flex items-center justify-center text-xs font-bold mt-0.5">4</span>
