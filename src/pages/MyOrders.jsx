@@ -47,17 +47,19 @@ const MyOrders = () => {
         setLoading(true);
         
         // Fetch from productOrders collection only
-        const productOrdersQuery = query(
-          collection(db, 'productOrders'),
-          where('userId', '==', user.uid),
-          orderBy('createdAt', 'desc')
-        );
-        const productOrdersSnapshot = await getDocs(productOrdersQuery);
-        const allOrders = productOrdersSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          type: 'product',
-        }));
+        const productOrdersSnap = await getDocs(collection(db, 'productOrders'));
+        const allOrders = productOrdersSnap.docs
+          .map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            type: 'product',
+          }))
+          .filter(order => order.userId === user.uid)
+          .sort((a, b) => {
+            const aTime = a.createdAt?.toDate?.() || new Date(a.createdAt || 0);
+            const bTime = b.createdAt?.toDate?.() || new Date(b.createdAt || 0);
+            return bTime - aTime; // Descending order
+          });
         setOrders(allOrders);
       } catch (err) {
         console.error('Error fetching orders:', err);

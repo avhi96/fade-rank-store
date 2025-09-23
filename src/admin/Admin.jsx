@@ -121,17 +121,17 @@ const Admin = () => {
       }));
       setRankCodes(codesData);
 
-      // Fetch all purchases from razorpayOrders (verified orders)
+      // Fetch all purchases from productOrders (all orders)
       const allPurchases = [];
 
-      // Fetch razorpay orders (these are the verified/completed orders)
-      const razorpayOrdersSnap = await getDocs(collection(db, 'razorpayOrders'));
-      razorpayOrdersSnap.docs.forEach(doc => {
+      // Fetch product orders (all orders including verified ones)
+      const productOrdersSnap = await getDocs(collection(db, 'productOrders'));
+      productOrdersSnap.docs.forEach(doc => {
         const orderData = doc.data();
         const notes = orderData.notes || {};
         allPurchases.push({
           id: doc.id,
-          collection: 'razorpayOrders',
+          collection: 'productOrders',
           type: 'Discord Rank',
           userId: orderData.userId,
           userEmail: usersData[orderData.userId]?.email || orderData.userEmail || orderData.email || notes.customerEmail || 'Not provided',
@@ -280,7 +280,7 @@ const Admin = () => {
 
   const updateOrderStatus = async (orderId, newStatus, orderType) => {
     try {
-      await updateDoc(doc(db, 'razorpayOrders', orderId), { status: newStatus });
+      await updateDoc(doc(db, 'productOrders', orderId), { status: newStatus });
       toast.success(`Order status updated to ${newStatus}`);
       fetchAllData();
     } catch (error) {
