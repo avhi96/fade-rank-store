@@ -138,7 +138,7 @@ const Checkout = () => {
 
     try {
       // Call backend to create Razorpay order
-      const createOrderResponse = await fetch('https://store-backend-avhi96s-projects.vercel.app/api/razorpay/create-order', {
+      const createOrderResponse = await fetch('http://localhost:3000/api/razorpay/create-order', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -198,7 +198,7 @@ const Checkout = () => {
         handler: async function (response) {
           try {
             // Verify payment with backend
-            const verifyResponse = await fetch('https://store-backend-avhi96s-projects.vercel.app/api/razorpay/verify-payment', {
+            const verifyResponse = await fetch('http://localhost:3000/api/razorpay/verify-payment', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',

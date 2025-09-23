@@ -46,34 +46,18 @@ const MyOrders = () => {
       try {
         setLoading(true);
         
-        // Fetch from users/{userId}/orders
-        const userOrdersQuery = query(
-          collection(db, 'users', user.uid, 'orders'),
+        // Fetch from productOrders collection only
+        const productOrdersQuery = query(
+          collection(db, 'productOrders'),
+          where('userId', '==', user.uid),
           orderBy('createdAt', 'desc')
         );
-        const userOrdersSnapshot = await getDocs(userOrdersQuery);
-        const userOrders = userOrdersSnapshot.docs.map(doc => ({
+        const productOrdersSnapshot = await getDocs(productOrdersQuery);
+        const allOrders = productOrdersSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
-          type: 'item',
+          type: 'product',
         }));
-
-        // Fetch from productOrders collection
-        const productOrdersSnap = await getDocs(collection(db, 'productOrders'));
-        const productOrders = productOrdersSnap.docs
-          .map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            type: 'product',
-          }))
-          .filter(order => order.userId === user.uid);
-
-        // Merge all arrays and sort by createdAt in JavaScript
-        const allOrders = [...userOrders, ...productOrders].sort((a, b) => {
-          const aTime = a.createdAt?.toDate?.() || new Date(a.createdAt || 0);
-          const bTime = b.createdAt?.toDate?.() || new Date(b.createdAt || 0);
-          return bTime - aTime; // Descending order
-        });
         setOrders(allOrders);
       } catch (err) {
         console.error('Error fetching orders:', err);
@@ -179,8 +163,7 @@ Visit us again for more Minecraft ranks!
     const orderId = selectedOrder.id;
 
     try {
-      await deleteDoc(doc(db, 'orders', orderId));
-      await deleteDoc(doc(db, 'users', user.uid, 'orders', orderId));
+      await deleteDoc(doc(db, 'productOrders', orderId));
       setOrders(prev => prev.filter(order => order.id !== orderId));
       toast.success('Order cancelled successfully');
     } catch (err) {
@@ -429,8 +412,7 @@ Visit us again for more Minecraft ranks!
                           <button
                             onClick={async () => {
                               try {
-                                await deleteDoc(doc(db, 'orders', order.id));
-                                await deleteDoc(doc(db, 'users', user.uid, 'orders', order.id));
+                                await deleteDoc(doc(db, 'productOrders', order.id));
                                 setOrders(prev => prev.filter(o => o.id !== order.id));
                                 toast.success('Order deleted successfully');
                               } catch (err) {
