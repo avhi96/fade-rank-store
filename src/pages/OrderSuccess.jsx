@@ -48,82 +48,88 @@ const OrderSuccess = () => {
     { id: 3, title: 'Ready to Use', description: 'Access your Minecraft server to enjoy your new rank privileges and exclusive features.', status: 'pending', icon: FaRocket }
   ]);
 
-  // Fetch updated order data with code during processing animation
+  // Check if code is already available in initial orderData
   useEffect(() => {
-    if (!showProcessingAnimation || !orderData?.paymentId) return;
+    if (orderData?.assignedCode) {
+      console.log('Code already available in initial orderData:', orderData.assignedCode);
+      setUpdatedOrderData(orderData);
+    } else if (!showProcessingAnimation || !orderData?.paymentId) {
+      return;
+    } else {
+      // Fallback: fetch updated order data if code not in initial data
+      const fetchUpdatedOrder = async () => {
+        try {
+          console.log('Fetching updated order data for paymentId:', orderData.paymentId);
 
-    const fetchUpdatedOrder = async () => {
-      try {
-        console.log('Fetching updated order data for paymentId:', orderData.paymentId);
+          // Wait a bit for webhook to process
+          await new Promise(resolve => setTimeout(resolve, 2000));
 
-        // Wait a bit for webhook to process
-        await new Promise(resolve => setTimeout(resolve, 5000));
+          // Try to fetch from razorpayOrders collection first
+          const razorpayOrdersRef = collection(db, 'razorpayOrders');
+          const razorpayQuery = query(razorpayOrdersRef, where('paymentId', '==', orderData.paymentId));
+          const razorpaySnapshot = await getDocs(razorpayQuery);
 
-        // Try to fetch from razorpayOrders collection first
-        const razorpayOrdersRef = collection(db, 'razorpayOrders');
-        const razorpayQuery = query(razorpayOrdersRef, where('paymentId', '==', orderData.paymentId));
-        const razorpaySnapshot = await getDocs(razorpayQuery);
+          console.log('Razorpay orders found:', razorpaySnapshot.size);
 
-        console.log('Razorpay orders found:', razorpaySnapshot.size);
+          if (!razorpaySnapshot.empty) {
+            const updatedOrder = razorpaySnapshot.docs[0].data();
+            console.log('Razorpay order data:', updatedOrder);
+            console.log('Assigned code in razorpay order:', updatedOrder.assignedCode);
 
-        if (!razorpaySnapshot.empty) {
-          const updatedOrder = razorpaySnapshot.docs[0].data();
-          console.log('Razorpay order data:', updatedOrder);
-          console.log('Assigned code in razorpay order:', updatedOrder.assignedCode);
-
-          if (updatedOrder.assignedCode) {
-            console.log('Found updated order with code:', updatedOrder.assignedCode);
-            setUpdatedOrderData({ ...orderData, ...updatedOrder });
-            return;
+            if (updatedOrder.assignedCode) {
+              console.log('Found updated order with code:', updatedOrder.assignedCode);
+              setUpdatedOrderData({ ...orderData, ...updatedOrder });
+              return;
+            }
           }
-        }
 
-        // Fallback to productOrders collection
-        const productOrdersRef = collection(db, 'productOrders');
-        const productQuery = query(productOrdersRef, where('paymentId', '==', orderData.paymentId));
-        const productSnapshot = await getDocs(productQuery);
+          // Fallback to productOrders collection
+          const productOrdersRef = collection(db, 'productOrders');
+          const productQuery = query(productOrdersRef, where('paymentId', '==', orderData.paymentId));
+          const productSnapshot = await getDocs(productQuery);
 
-        console.log('Product orders found:', productSnapshot.size);
+          console.log('Product orders found:', productSnapshot.size);
 
-        if (!productSnapshot.empty) {
-          const updatedOrder = productSnapshot.docs[0].data();
-          console.log('Product order data:', updatedOrder);
-          console.log('Assigned code in product order:', updatedOrder.assignedCode);
+          if (!productSnapshot.empty) {
+            const updatedOrder = productSnapshot.docs[0].data();
+            console.log('Product order data:', updatedOrder);
+            console.log('Assigned code in product order:', updatedOrder.assignedCode);
 
-          if (updatedOrder.assignedCode) {
-            console.log('Found updated order with code in productOrders:', updatedOrder.assignedCode);
-            setUpdatedOrderData({ ...orderData, ...updatedOrder });
-            return;
+            if (updatedOrder.assignedCode) {
+              console.log('Found updated order with code in productOrders:', updatedOrder.assignedCode);
+              setUpdatedOrderData({ ...orderData, ...updatedOrder });
+              return;
+            }
           }
-        }
 
-        // Also check the root 'orders' collection
-        const ordersRef = collection(db, 'orders');
-        const ordersQuery = query(ordersRef, where('paymentId', '==', orderData.paymentId));
-        const ordersSnapshot = await getDocs(ordersQuery);
+          // Also check the root 'orders' collection
+          const ordersRef = collection(db, 'orders');
+          const ordersQuery = query(ordersRef, where('paymentId', '==', orderData.paymentId));
+          const ordersSnapshot = await getDocs(ordersQuery);
 
-        console.log('Root orders found:', ordersSnapshot.size);
+          console.log('Root orders found:', ordersSnapshot.size);
 
-        if (!ordersSnapshot.empty) {
-          const updatedOrder = ordersSnapshot.docs[0].data();
-          console.log('Root order data:', updatedOrder);
-          console.log('Assigned code in root order:', updatedOrder.assignedCode);
+          if (!ordersSnapshot.empty) {
+            const updatedOrder = ordersSnapshot.docs[0].data();
+            console.log('Root order data:', updatedOrder);
+            console.log('Assigned code in root order:', updatedOrder.assignedCode);
 
-          if (updatedOrder.assignedCode) {
-            console.log('Found updated order with code in orders:', updatedOrder.assignedCode);
-            setUpdatedOrderData({ ...orderData, ...updatedOrder });
+            if (updatedOrder.assignedCode) {
+              console.log('Found updated order with code in orders:', updatedOrder.assignedCode);
+              setUpdatedOrderData({ ...orderData, ...updatedOrder });
+            }
           }
+
+          console.log('Final updatedOrderData:', updatedOrderData);
+
+        } catch (error) {
+          console.error('Error fetching updated order:', error);
         }
+      };
 
-        console.log('Final updatedOrderData:', updatedOrderData);
-
-      } catch (error) {
-        console.error('Error fetching updated order:', error);
-      }
-    };
-
-    fetchUpdatedOrder();
-  }, [showProcessingAnimation, orderData?.paymentId]);
+      fetchUpdatedOrder();
+    }
+  }, [showProcessingAnimation, orderData?.paymentId, orderData?.assignedCode]);
 
   const handleAnimationComplete = () => {
     setShowProcessingAnimation(false);

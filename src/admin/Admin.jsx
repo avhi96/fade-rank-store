@@ -23,6 +23,12 @@ const Admin = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedPurchase, setSelectedPurchase] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState(null);
+  const [showDeleteCodeModal, setShowDeleteCodeModal] = useState(false);
+  const [codeToDelete, setCodeToDelete] = useState(null);
+  const [showDeleteRankModal, setShowDeleteRankModal] = useState(false);
+  const [rankToDelete, setRankToDelete] = useState(null);
   const [stats, setStats] = useState({
     totalPurchases: 0,
     totalRevenue: 0,
@@ -115,20 +121,21 @@ const Admin = () => {
       }));
       setRankCodes(codesData);
 
-      // Fetch all purchases
+      // Fetch all purchases from razorpayOrders (verified orders)
       const allPurchases = [];
 
-      // Fetch razorpay orders
+      // Fetch razorpay orders (these are the verified/completed orders)
       const razorpayOrdersSnap = await getDocs(collection(db, 'razorpayOrders'));
       razorpayOrdersSnap.docs.forEach(doc => {
         const orderData = doc.data();
         const notes = orderData.notes || {};
         allPurchases.push({
           id: doc.id,
+          collection: 'razorpayOrders',
           type: 'Discord Rank',
           userId: orderData.userId,
-          userEmail: users[orderData.userId]?.email || orderData.userEmail || orderData.email || notes.customerEmail || 'Not provided',
-          username: users[orderData.userId]?.username || 'Not provided',
+          userEmail: usersData[orderData.userId]?.email || orderData.userEmail || orderData.email || notes.customerEmail || 'Not provided',
+          username: usersData[orderData.userId]?.username || 'Not provided',
           items: [{
             name: orderData.productName || orderData.name || notes.productName || 'Discord Rank',
             price: orderData.price || orderData.amount || 0,
@@ -139,29 +146,6 @@ const Admin = () => {
           createdAt: orderData.createdAt,
           discordUsername: orderData.discordUsername || notes.discordUsername || 'Not provided',
           minecraftUsername: orderData.minecraftUsername || notes.minecraftUsername || 'Not provided',
-          assignedCode: orderData.assignedCode || null
-        });
-      });
-
-      // Fetch digital product orders
-      const digitalOrdersSnap = await getDocs(collection(db, 'productOrders'));
-      digitalOrdersSnap.docs.forEach(doc => {
-        const orderData = doc.data();
-        allPurchases.push({
-          id: doc.id,
-          type: 'Discord Rank',
-          userId: orderData.userId,
-          userEmail: orderData.userEmail || orderData.email || 'Not provided',
-          items: [{
-            name: orderData.productName || orderData.name || 'Discord Rank',
-            price: orderData.price || 0,
-            quantity: 1
-          }],
-          totalAmount: orderData.price || 0,
-          status: orderData.status || 'Pending',
-          createdAt: orderData.createdAt,
-          discordUsername: orderData.discordUsername || 'Not provided',
-          minecraftUsername: orderData.minecraftUsername || 'Not provided',
           assignedCode: orderData.assignedCode || null
         });
       });
@@ -274,13 +258,20 @@ const Admin = () => {
     setActiveTab('addRank');
   };
 
-  const handleDeleteRank = async (rankId) => {
-    if (!window.confirm('Are you sure you want to delete this rank?')) return;
-    
+  const handleDeleteRank = (rank) => {
+    setRankToDelete(rank);
+    setShowDeleteRankModal(true);
+  };
+
+  const confirmDeleteRank = async () => {
+    if (!rankToDelete) return;
+
     try {
-      await deleteDoc(doc(db, 'products', rankId));
+      await deleteDoc(doc(db, 'products', rankToDelete.id));
       toast.success('Rank deleted successfully');
       fetchAllData();
+      setShowDeleteRankModal(false);
+      setRankToDelete(null);
     } catch (error) {
       console.error('Error deleting rank:', error);
       toast.error('Failed to delete rank');
@@ -298,13 +289,20 @@ const Admin = () => {
     }
   };
 
-  const deleteOrder = async (orderId, orderType) => {
-    if (!window.confirm('Are you sure you want to delete this order?')) return;
+  const handleDeleteOrder = (order) => {
+    setOrderToDelete(order);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteOrder = async () => {
+    if (!orderToDelete) return;
 
     try {
-      await deleteDoc(doc(db, 'razorpayOrders', orderId));
+      await deleteDoc(doc(db, orderToDelete.collection, orderToDelete.id));
       toast.success('Order deleted successfully');
       fetchAllData();
+      setShowDeleteModal(false);
+      setOrderToDelete(null);
     } catch (error) {
       console.error('Error deleting order:', error);
       toast.error('Failed to delete order');
@@ -378,13 +376,20 @@ const Admin = () => {
     }
   };
 
-  const handleDeleteCode = async (codeId) => {
-    if (!window.confirm('Are you sure you want to delete this code?')) return;
-    
+  const handleDeleteCode = (code) => {
+    setCodeToDelete(code);
+    setShowDeleteCodeModal(true);
+  };
+
+  const confirmDeleteCode = async () => {
+    if (!codeToDelete) return;
+
     try {
-      await deleteDoc(doc(db, 'rankCodes', codeId));
+      await deleteDoc(doc(db, 'rankCodes', codeToDelete.id));
       toast.success('Code deleted successfully');
       fetchAllData();
+      setShowDeleteCodeModal(false);
+      setCodeToDelete(null);
     } catch (error) {
       console.error('Error deleting code:', error);
       toast.error('Failed to delete code');
@@ -676,7 +681,7 @@ const Admin = () => {
                                 View
                               </button>
                               <button
-                                onClick={() => deleteOrder(purchase.id, purchase.type)}
+                                onClick={() => handleDeleteOrder(purchase)}
                                 className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
                               >
                                 <FaTrash />
@@ -986,7 +991,7 @@ const Admin = () => {
                             Edit
                           </button>
                           <button
-                            onClick={() => handleDeleteRank(rank.id)}
+                            onClick={() => handleDeleteRank(rank)}
                             className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
                           >
                             <FaTrash />
@@ -1127,7 +1132,7 @@ const Admin = () => {
                                       {code.code}
                                     </span>
                                     <button
-                                      onClick={() => handleDeleteCode(code.id)}
+                                      onClick={() => handleDeleteCode(code)}
                                       className="text-red-500 hover:text-red-700 transition-colors"
                                     >
                                       <FaTrash className="text-xs" />
@@ -1162,11 +1167,7 @@ const Admin = () => {
                                       )}
                                     </div>
                                     <button
-                                      onClick={() => {
-                                        if (window.confirm('Are you sure you want to delete this used code? This action cannot be undone.')) {
-                                          handleDeleteCode(code.id);
-                                        }
-                                      }}
+                                      onClick={() => handleDeleteCode(code)}
                                       className="text-red-500 hover:text-red-700 transition-colors ml-2 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
                                       title="Delete used code"
                                     >
@@ -1284,9 +1285,158 @@ const Admin = () => {
             </div>
           </div>
         )}
+
+        {/* Delete Order Confirmation Modal */}
+        {showDeleteModal && orderToDelete && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full">
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
+                    <FaTrash className="text-red-600 text-xl" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Delete Order</h2>
+                    <p className="text-gray-600 dark:text-gray-400">This action cannot be undone</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4 mb-6">
+                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 p-4 rounded-lg">
+                    <p className="text-red-800 dark:text-red-300 font-medium mb-2">Are you sure you want to delete this order?</p>
+                    <div className="text-sm text-red-700 dark:text-red-400 space-y-1">
+                      <p><strong>Order ID:</strong> {orderToDelete.id.slice(-6)}</p>
+                      <p><strong>Customer:</strong> {orderToDelete.userEmail}</p>
+                      <p><strong>Amount:</strong> ₹{orderToDelete.totalAmount}</p>
+                      <p><strong>Status:</strong> {orderToDelete.status}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowDeleteModal(false);
+                      setOrderToDelete(null);
+                    }}
+                    className="flex-1 px-4 py-3 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmDeleteOrder}
+                    className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+                  >
+                    Delete Order
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Rank Confirmation Modal */}
+        {showDeleteRankModal && rankToDelete && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full">
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
+                    <FaTrash className="text-red-600 text-xl" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Delete Rank</h2>
+                    <p className="text-gray-600 dark:text-gray-400">This action cannot be undone</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4 mb-6">
+                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 p-4 rounded-lg">
+                    <p className="text-red-800 dark:text-red-300 font-medium mb-2">Are you sure you want to delete this rank?</p>
+                    <div className="text-sm text-red-700 dark:text-red-400 space-y-1">
+                      <p><strong>Rank Name:</strong> {rankToDelete.name}</p>
+                      <p><strong>Price:</strong> ₹{rankToDelete.price}</p>
+                      <p><strong>Description:</strong> {rankToDelete.description}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowDeleteRankModal(false);
+                      setRankToDelete(null);
+                    }}
+                    className="flex-1 px-4 py-3 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmDeleteRank}
+                    className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+                  >
+                    Delete Rank
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Code Confirmation Modal */}
+        {showDeleteCodeModal && codeToDelete && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full">
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
+                    <FaTrash className="text-red-600 text-xl" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Delete Code</h2>
+                    <p className="text-gray-600 dark:text-gray-400">This action cannot be undone</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4 mb-6">
+                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 p-4 rounded-lg">
+                    <p className="text-red-800 dark:text-red-300 font-medium mb-2">Are you sure you want to delete this code?</p>
+                    <div className="text-sm text-red-700 dark:text-red-400 space-y-1">
+                      <p><strong>Code:</strong> <span className="font-mono">{codeToDelete.code}</span></p>
+                      <p><strong>Rank:</strong> {codeToDelete.rankName}</p>
+                      <p><strong>Status:</strong> {codeToDelete.isUsed ? 'Used' : 'Available'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowDeleteCodeModal(false);
+                      setCodeToDelete(null);
+                    }}
+                    className="flex-1 px-4 py-3 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmDeleteCode}
+                    className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+                  >
+                    Delete Code
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
+
     </div>
+
   );
+
 };
 
 export default Admin;

@@ -138,7 +138,7 @@ const Checkout = () => {
 
     try {
       // Call backend to create Razorpay order
-      const createOrderResponse = await fetch('https://store-backend-ten.vercel.app/api/razorpay/create-order', {
+      const createOrderResponse = await fetch('https://store-backend-avhi96s-projects.vercel.app/api/razorpay/create-order', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -198,7 +198,7 @@ const Checkout = () => {
         handler: async function (response) {
           try {
             // Verify payment with backend
-            const verifyResponse = await fetch('https://store-backend-ten.vercel.app/api/razorpay/verify-payment', {
+            const verifyResponse = await fetch('https://store-backend-avhi96s-projects.vercel.app/api/razorpay/verify-payment', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -237,7 +237,6 @@ const Checkout = () => {
             localStorage.removeItem('buyNowItem');
 
             // Construct complete order data for success page (cart checkout)
-            // Note: assignedCode will be assigned by webhook asynchronously
             const completeOrderData = {
               userId: user.uid,
               userEmail: user.email,
@@ -248,10 +247,11 @@ const Checkout = () => {
               originalPrice: cart.reduce((acc, item) => acc + item.price * (item.quantity || 1), 0),
               discount: cart.reduce((acc, item) => acc + (item.discount || 0) * (item.quantity || 1), 0),
               address: selectedAddress,
-              status: 'Processing', // Initial status, webhook will update to Completed
+              status: 'Completed', // Payment is verified, so mark as completed
               paymentId: verificationResult.paymentId,
               paymentSignature: response.razorpay_signature || null,
-              assignedCode: null, // Will be set by webhook
+              assignedCode: verificationResult.assignedCode || null, // Use code from verification response
+              codeAssignmentError: verificationResult.codeAssignmentError || null,
               createdAt: new Date().toISOString(),
               items: cart.map(item => ({
                 name: item.name,

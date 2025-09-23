@@ -68,28 +68,8 @@ const MyOrders = () => {
           }))
           .filter(order => order.userId === user.uid);
 
-        // Fetch from root-level 'orders' collection
-        const ordersSnap = await getDocs(collection(db, 'orders'));
-        const rootOrders = ordersSnap.docs
-          .map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            type: 'item',
-          }))
-          .filter(order => order.userId === user.uid);
-
-        // Fetch from razorpayOrders collection
-        const razorpayOrdersSnap = await getDocs(collection(db, 'razorpayOrders'));
-        const razorpayOrders = razorpayOrdersSnap.docs
-          .map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            type: 'razorpay',
-          }))
-          .filter(order => order.userId === user.uid);
-
         // Merge all arrays and sort by createdAt in JavaScript
-        const allOrders = [...userOrders, ...productOrders, ...rootOrders, ...razorpayOrders].sort((a, b) => {
+        const allOrders = [...userOrders, ...productOrders].sort((a, b) => {
           const aTime = a.createdAt?.toDate?.() || new Date(a.createdAt || 0);
           const bTime = b.createdAt?.toDate?.() || new Date(b.createdAt || 0);
           return bTime - aTime; // Descending order
